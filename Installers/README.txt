@@ -29,14 +29,6 @@ Utilisation :
         
         Installation d'un serveur web lamp (Linux, Apache2, Mariadb, php)
 
-        provisoirement, il est necessaire d'ajouter un variable d'environnement pour le mot de passe de la base de donnée mariadb.
-
-            export DB_PASSWORD=your_password
-
-        Executer ensuite le script et attendre la fin de l'installation:
-
-            sudo lamp
-
         Un message vous avertis de la fin de l'installation, votre serveur web est maintenant installé et accessible a l'addresse : http://localhost/
 
 
