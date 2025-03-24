@@ -29,8 +29,8 @@ function initializeVariables() {
     LAMP_INSTALL=false
     DATE=$(date --iso-8601)
     TMP_FOLDER=/tmp/wp
-    LOG_FOLDER=/var/log/wp_install
-    LOG_FILE=wp_install.log
+    LOG_FOLDER=/var/log/klftb/
+    LOG_FILE=wp-in.log
     APACHE_PATH=/var/www/html
     OPTS=$(getopt -o hld:u: --long help,lamp,database:,username: -n 'wordpress' -- "$@")
 }
@@ -74,7 +74,7 @@ function sortArgs() {
     done
 }
 
-function createFiles() {
+function handleFiles() {
     if [[ ! -d $LOG_FOLDER ]]; then
         sudo mkdir -p $LOG_FOLDER
         if [[ ! -f $LOG_FOLDER/$LOG_FILE ]]; then
@@ -94,7 +94,7 @@ echo $WP_DB_NAME
 echo $WP_ADMIN
 echo 'test'
 
-createFiles
+handleFiles
 sortArgs
 echo $WP_DB_NAME
 echo $WP_ADMIN
