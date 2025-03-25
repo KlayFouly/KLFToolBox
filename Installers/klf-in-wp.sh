@@ -45,26 +45,26 @@ function sortArgs() {
             -d | --database)
                 echo $1
                 WP_DB_NAME=$2
-		shift 2
+		        shift 2
                 ;;
             -l | --lamp)
                 echo $1
                 LAMP_INSTALL=TRUE
-		shift
+		        shift
                 ;;
             -u | --username)
                 echo $1
                 WP_ADMIN=$2
-		shift 2
+		        shift 2
                 ;;
             -h | --help)
                 echo $0
                 helper
-		shift
+		        shift
                 ;;
             --)
                 echo $1
-		shift
+		        shift
                 break
                 ;;
             *)

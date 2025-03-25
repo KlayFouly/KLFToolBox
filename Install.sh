@@ -19,8 +19,8 @@ function sortArgs(){
                 break
                 ;;
             -p | --path)
-                uninstallComponent
-                shift
+                PATH_DIR=$2
+                shift 2
                 ;;
             --)
                 shift
@@ -40,16 +40,19 @@ function variablesInitialize(){
     FILES="Installers/*"
     INSTALLER_DIRECTORY=Installers/
     PATH_DIR=/usr/bin/
-    OPTS=$(getopt -o hp --long help,path -n 'install' -- "$@")
+    OPTS=$(getopt -o hp: --long help,path: -n 'install' -- "$@")
 }
 
-
+function installScripts(){
+    sudo chmod -R +x Installers/* 
+    for f in $FILES
+    do
+        echo "Installing $f..."
+        cp $f $PATH_DIR
+        mv "$PATH_DIR${f}" "$PATH_DIR${f/.sh/}" 
+    done
+}
 
 varibalesInitialize "$@"
-sudo chmod -R +x Installers/* 
-for f in $FILES
-do
-    echo "Installing $f..."
-    cp $f $PATH_DIR
-    mv "$PATH_DIR${f}" "$PATH_DIR${f/.sh/}" 
-done
+sortArgs
+installScripts
