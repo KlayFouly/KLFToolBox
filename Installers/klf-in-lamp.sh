@@ -2,39 +2,11 @@
 set -e
 
 function helper() {
-    echo "Usage : $0 [ -f | --fresh ] [ -h | --help ]"
-    echo "Options :"
-    echo " -f, --fresh : Fresh installation ( Warning ! Will remove all existing lamp serveurs and databases)"
-    echo " -h, --help : Display this help message"
-}
-
-function sortArgs() {
-
-    eval set -- "$OPTS"
-
-    while true; do
-        case "$1" in
-            -h | --help)
-                echo $0
-                helper
-                shift 2
-                ;;
-            -f | --fresh)
-                echo $1
-                uninstallComponent
-                shift 2
-                ;;
-            --)
-                echo $1
-                shift
-                break
-                ;;
-            *)
-                echo "$1 : Unknown options"
-                exit 101
-                ;;
-        esac
-    done
+    echo " Usage : $0 [ -f | --fresh ] [ -h | --help ]"
+    echo " Options :"
+    echo "    -f, --fresh : Fresh installation ( Warning ! Will remove all existing lamp serveurs and databases)"
+    echo "    -h, --help : Display this help message"
+    exit 0
 }
 
 function variablesInitialize() {
@@ -46,13 +18,42 @@ function variablesInitialize() {
     OPTS=$(getopt -o hf --long help,fresh -n 'lamp' -- "$@")
 }
 
+function sortArgs(){
+    eval set -- "$OPTS"
+    while true;do
+        case "$1" in
+            -h | --help)
+                helper
+                shift
+                break
+                ;;
+            -f | --fresh)
+                uninstallComponent
+                shift
+                ;;
+            --)
+                shift
+                break
+                ;;
+            *)
+                echo "$1 : Unknown options"
+                exit 101
+                ;;
+        esac
+    done
+}
+
+
 function adminPasswordCreation() {
     echo "Please enter a password for the root user to connect to mariadb..."
-    read -s WP_ADMIN_PASSWORD
+    read -s DB_PASSWORD
     echo "Confirm password"
     read -s PASSCONFIRM
 
-    if [[ ! $DB_PASSWORD = $PASSCONFIRM ]];then
+    echo $DB_PASSWORD
+    echo $PASSCONFIRM
+
+    if [[ ! $DB_PASSWORD == $PASSCONFIRM ]];then
         echo "Password not matching, exiting installation process"
         exit 102
     fi
@@ -63,22 +64,27 @@ function uninstallComponent(){
     echo "The -r option"
     read UNINST_CHOICE
 
-    if [[dpkg -l | grep mariadb]];then
-        sudo apt-get -qq autoremove mariadb -y 1>$LOG_DIR$LOG_FILE 2>&1
-        sudo apt-get -qq autopurge mariadb -y 1>$LOG_DIR$LOG_FILE 2>&1
+    if [[ $(dpkg -l | grep mariadb) ]];then
+        sudo apt-get autoremove mariadb* -y 1>$LOG_DIR$LOG_FILE 2>&1
+        sudo apt-get autopurge mariadb* -y 1>$LOG_DIR$LOG_FILE 2>&1
+        sudo rm -rf /var/lib/mysql
     fi
 
-    if [[dpkg -l | grep apache2]];then
-        sudo apt-get -qq autoremove apache2 -y 1>$LOG_DIR$LOG_FILE 2>&1
-        sudo apt-get -qq autopurge apache2 -y 1>$LOG_DIR$LOG_FILE 2>&1
+    if [[ $(dpkg -l | grep apache2) ]];then
+        sudo apt-get autoremove apache2* -y 1>$LOG_DIR$LOG_FILE 2>&1
+        sudo apt-get autopurge apache2* -y 1>$LOG_DIR$LOG_FILE 2>&1
+        sudo rm -rf /var/www/html/*
     fi
 
-    if [[dpkg -l | grep php]];
+    if [[ $(dpkg -l | grep php) ]];then
+        sudo apt-get autoremove php* -y 1>$LOG_DIR$LOG_FILE 2>&1
+        sudo apt-get autopurge php* -y 1>$LOG_DIR$LOG_FILE 2>&1
+    fi
 }
 
 function apacheInstall(){
     echo $'starting Apache2 installation...'
-    sudo apt-get -qq install apache2 -y 1>$LOG_DIR$LOG_FILE 2>&1
+    sudo apt-get install apache2 -y 1>$LOG_DIR$LOG_FILE 2>&1
     echo $'done\n'
     sudo systemctl enable apache2 1>$LOG_DIR$LOG_FILE 2>&1
     echo $'Apache2 service started successfully'
@@ -99,13 +105,13 @@ function apacheModEnabling(){
 
 function mariadbInstall(){
     echo $'\nInstalling MariaDB...'
-    sudo apt -qq install -y mariadb-server 1>$LOG_DIR$LOG_FILE 2>&1
+    sudo apt-get install -y mariadb-server 1>$LOG_DIR$LOG_FILE 2>&1
     echo $'done'
 }
 
 function mariadbSec(){
     echo $'\nSecuring MySQL...'
-    sudo mysql -sfu root <<EOS
+    sudo mariadb -sfu root <<EOS
 -- set root password
 ALTER USER 'root'@'localhost' IDENTIFIED BY '$DB_PASSWORD';
 -- delete anonymous users
@@ -118,7 +124,7 @@ DROP DATABASE IF EXISTS test;
 DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';
 -- make changes immediately
 FLUSH PRIVILEGES;
-EOS 1>$LOG_DIR$LOG_FILE 2>&1
+EOS
     echo $'\tNew password set for user root'
     echo $'\tAnonymous users deleted'
     echo $'\tRemote root capabilities deleted'
@@ -131,18 +137,18 @@ EOS 1>$LOG_DIR$LOG_FILE 2>&1
 
 function phpInstall(){
     echo $'\nInstalling PHP...'
-    sudo apt -qq install -y apache2-utils 1>$LOG_DIR$LOG_FILE 2>&1
-    sudo apt -qq install -y php 1>$LOG_DIR$LOG_FILE 2>&1
-    sudo apt -qq install -y php-mysql php-zip php-gd php-mbstring php-curl php-xml php-pear php-bcmath 1>$LOG_DIR$LOG_FILE 2>&1
+    sudo apt install -y apache2-utils 1>$LOG_DIR$LOG_FILE 2>&1
+    sudo apt install -y php 1>$LOG_DIR$LOG_FILE 2>&1
+    sudo apt install -y php-mysql php-zip php-gd php-mbstring php-curl php-xml php-pear php-bcmath 1>$LOG_DIR$LOG_FILE 2>&1
     echo 'done'
 }
 
 function handleFiles(){
-    if [[ ! -d $LOG_DIR]];then    
-        sudo mkdir -p /var/log/lampinstall
+    if [[ ! -d $LOG_DIR ]];then
+        sudo mkdir -p $LOG_DIR
     fi
-    
-    if [[ ! -e $LOG_DIR$LOG_FILE]];then
+
+    if [[ ! -e $LOG_DIR$LOG_FILE ]];then
         sudo touch $LOG_DIR$LOG_FILE
         sudo chmod 777 $LOG_DIR$LOG_FILE
     else
@@ -151,12 +157,15 @@ function handleFiles(){
     fi
 }
 
+variablesInitialize "$@"
+sortArgs
+handleFiles
+
 echo $'Installing LAMP Serveur...\n'
 echo $'Updating package list...\n'
-sudo apt-get -qq update -y 1>$LOG_DIR$LOG_FILE 2>&1
 
-handleFiles
-variablesInitialize
+sudo apt-get update -y 1>$LOG_DIR$LOG_FILE 2>&1
+
 adminPasswordCreation
 
 ## Installation process ##

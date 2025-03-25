@@ -2,12 +2,13 @@
 set -e
 
 function helper() {
-    echo "Usage : $0 [ -d | --database DATABASE ] [ -u | username ADMINNAME ] [ -l | --lamp ] [ -h | --help ]"
-    echo "Options :"
-    echo " -d, --database DATABASE : Database name"
-    echo " -u, --username ADMINNAME : Username of the database administrator"
-    echo " -l, --lamp : This will install a lamp server on this host"
-    echo " -h, --help : Display this help message"
+    echo " Usage : $0 [ -d | --database DATABASE ] [ -u | username ADMINNAME ] [ -l | --lamp ] [ -h | --help ]"
+    echo " Options :"
+    echo "    -d, --database DATABASE : Database name"
+    echo "    -u, --username ADMINNAME : Username of the database administrator"
+    echo "    -l, --lamp : This will install a lamp server on this host"
+    echo "    -h, --help : Display this help message"
+    exit 0
 }
 
 function adminPasswordCreation() {
@@ -16,7 +17,7 @@ function adminPasswordCreation() {
     echo "Confirm password"
     read -s PASSCONFIRM
 
-    if [[ ! PASSCONFIRM == WP_ADMIN_PASSWORD ]];then
+    if [[ ! $PASSCONFIRM == $WP_ADMIN_PASSWORD ]];then
         echo "Password not matching, exiting installation process"
         exit 102
     fi
@@ -44,26 +45,26 @@ function sortArgs() {
             -d | --database)
                 echo $1
                 WP_DB_NAME=$2
-                shift 2
+		shift 2
                 ;;
             -l | --lamp)
                 echo $1
                 LAMP_INSTALL=TRUE
-                shift 2
+		shift
                 ;;
             -u | --username)
                 echo $1
                 WP_ADMIN=$2
-                shift 2
+		shift 2
                 ;;
             -h | --help)
                 echo $0
                 helper
-                shift 2
+		shift
                 ;;
             --)
                 echo $1
-                shift
+		shift
                 break
                 ;;
             *)
@@ -75,29 +76,24 @@ function sortArgs() {
 }
 
 function handleFiles() {
-    if [[ ! -d $LOG_FOLDER ]]; then
+    if [[ ! -d $LOG_FOLDER ]];then
         sudo mkdir -p $LOG_FOLDER
         if [[ ! -f $LOG_FOLDER/$LOG_FILE ]]; then
             sudo touch $LOG_FOLDER/$LOG_FILE
         fi
     fi
     
-    if [[ ! -d $TMP_FOLDER ]]; then
-        sudo mkdir $TMP_FOLDER 1>$LOG_FOLDER/$LOG_FILE 2>&1
+    if [[ ! -d $TMP_FOLDER ]];then
+        sudo mkdir -p $TMP_FOLDER 1>$LOG_FOLDER/$LOG_FILE 2>&1
     else
         sudo rm -r $TMP_FOLDER/
+        sudo mkdir -p $TMP_FOLDER 1>$LOG_FOLDER/$LOG_FILE 2>&1
     fi
 }
 
-initializeVariables
-echo $WP_DB_NAME
-echo $WP_ADMIN
-echo 'test'
-
-handleFiles
+initializeVariables "$@"
 sortArgs
-echo $WP_DB_NAME
-echo $WP_ADMIN
+handleFiles
 
     if [[ -z $WP_DB_NAME || -z $WP_ADMIN ]]; then
         echo 'Missing options'
@@ -106,12 +102,13 @@ echo $WP_ADMIN
     fi
 adminPasswordCreation
 
-if [[$LAMP_INSTALL = true ]];then
+if [[ $LAMP_INSTALL == true ]];then
     echo 'The lamp server installation will start soon'
-    if [[ ! command -v lamp ]];then
-        echo "The lamp installation program could not be found on your system, make sure it exist in your '/usr/bin' directory or reinstall the program"
+    if [[ $(command -v klf-in-lamp) ]];then
+        klf-in-lamp
     else
-        lamp
+        echo "The lamp installation program could not be found on your system, make sure it exist in your '/usr/bin' directory or reinstall the program"
+
     fi
 fi
 
@@ -119,20 +116,21 @@ if [[ -e /var/log/wordpressinstall ]]; then
     sudo rm -rf /var/log/wordpressinstall
 fi
 
+echo "before dl"
 sudo wget -c https://wordpress.org/latest.zip -O $TMP_FOLDER/latest.zip 1>$LOG_FOLDER/$LOG_FILE 2>&1
-
+echo "after dl"
 sudo mysql -su root -p<<EOS
-CREATE DATABASE wp_'$WP_DB_NAME';
+CREATE DATABASE $WP_DB_NAME;
 CREATE USER '$WP_ADMIN'@'localhost' IDENTIFIED BY '$WP_ADMIN_PASSWORD';
 GRANT ALL PRIVILEGES ON $WP_DB_NAME.* TO $WP_ADMIN@localhost;
 FLUSH PRIVILEGES;
-EOS 1>$LOG_FOLDER/$LOG_FILE 2>&1
+EOS
 
 sudo rm $APACHE_PATH/index.html 1>$LOG_FOLDER/$LOG_FILE 2>&1
 
 sudo apt update
 
-if [[ ! command -v zip ]];then
+if [[ ! $(command -v zip) ]];then
     sudo apt install zip -y
 fi
 
