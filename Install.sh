@@ -53,6 +53,6 @@ function installScripts(){
     done
 }
 
-varibalesInitialize "$@"
+variablesInitialize "$@"
 sortArgs
 installScripts
