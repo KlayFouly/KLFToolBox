@@ -44,13 +44,14 @@ function variablesInitialize(){
 }
 
 function installScripts(){
-    sudo chmod -R +x Installers/* 
+    sudo chmod -R +x $FILES 
     for f in $FILES
     do
         echo "Installing $f..."
-        cp $f $PATH_DIR
-        mv "$PATH_DIR${f}" "$PATH_DIR${f/.sh/}" 
+        mv "${f}" "${f/.sh/}" 
     done
+
+    sudo cp $FILES $PATH_FILES
 }
 
 variablesInitialize "$@"
