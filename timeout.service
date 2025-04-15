@@ -1,0 +1,17 @@
+[Unit]
+Description=Handle the expiracy of the host
+
+[Service]
+Type=simple
+
+User=root
+Group=root
+UMask=007
+
+ExecStart=
+
+Restart=on-failure
+
+
+[Install]
+WantedBy=multi-user.target
