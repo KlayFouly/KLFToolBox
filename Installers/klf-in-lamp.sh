@@ -59,6 +59,7 @@ function adminPasswordCreation() {
     fi
 }
 
+# NEED REWORK => USER SELECT SOFT TO UNINSTALL
 function uninstallComponent(){
     # Complete MariaDB Uninstall
     echo "The -r option"
