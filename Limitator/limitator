@@ -46,38 +46,38 @@ ENV_VAR_DIR=/etc/profile.d/
 ENV_VAR_FILE=expire.sh
 WORKING_DIR=$(dirname "$(readlink -f "$0")")
 SYSTEMD_DIR=/etc/systemd/system
-LOG_DIR=/var/log/limitator
-LOG_FILE=$LOG_DIR/limitator.log
-SCRIPT_DEST_DIR=/opt/bin/
+LOG_DIR=/var/log/limitator/
+LOG_FILE=limitator.log
+SCRIPT_DEST_DIR=/opt/bin/limitator/
 
 
 function log_Creation(){
     ## Create the log files and directory if it doesn't exist
     if [[ -d $LOG_DIR ]]; then
-        echo "Le répertoire $LOG_DIR existe déjà." 1>$LOG_DIR$LOG_FILE 2>&1
+        echo "Le répertoire $LOG_DIR existe déjà."
     else
-        echo "Création du répertoire $LOG_DIR" 1>$LOG_DIR$LOG_FILE 2>&1
-        sudo mkdir -p $LOG_DIR 1>$LOG_DIR$LOG_FILE 2>&1
+        echo "Création du répertoire $LOG_DIR"
+        sudo mkdir -p $LOG_DIR
     fi
 
     if [[ -f $LOG_DIR$LOG_FILE ]]; then
-        echo "Le fichier $LOG_FILE existe déjà." 1>$LOG_DIR$LOG_FILE 2>&1
+        echo "Le fichier $LOG_FILE existe déjà."
     else
-        echo "Création du fichier $LOG_FILE" 1>$LOG_DIR$LOG_FILE 2>&1
-        sudo touch $LOG_DIR$LOG_FILE 1>$LOG_DIR$LOG_FILE 2>&1
-        sudo chmod 644 $LOG_DIR$LOG_FILE 1>$LOG_DIR$LOG_FILE 2>&1
+        echo "Création du fichier $LOG_FILE"
+        sudo touch $LOG_DIR$LOG_FILE
+        sudo chmod 644 $LOG_DIR$LOG_FILE
     fi
-    echo "New entry : $(date +%d-%m-%Y)" > $LOG_DIR$LOG_FILE 1>$LOG_DIR$LOG_FILE 2>&1
+    echo "New entry : $(date +%d-%m-%Y)" > $LOG_DIR$LOG_FILE
 }
 
 function file_Creation(){
     ## Create the expire.sh file in /etc/profile.d/ if it doesn't exist
     if [[ -f $ENV_VAR_DIR$ENV_VAR_FILE ]]; then
-        echo "Le fichier expire.sh existe déjà." 1>$LOG_DIR$LOG_FILE 2>&1
-        echo "Suppression du fichier expire.sh" 1>$LOG_DIR$LOG_FILE 2>&1
+        echo "Le fichier expire.sh existe déjà."
+        echo "Suppression du fichier expire.sh"
         sudo rm -f $ENV_VAR_DIR$ENV_VAR_FILE 1>$LOG_DIR$LOG_FILE 2>&1
         sleep 1
-        echo "Création d'un nouveau fichier expire.sh" 1>$LOG_DIR$LOG_FILE 2>&1
+        echo "Création d'un nouveau fichier expire.sh"
         sudo touch $ENV_VAR_DIR$ENV_VAR_FILE 1>$LOG_DIR$LOG_FILE 2>&1
         sudo chmod 744 $ENV_VAR_DIR$ENV_VAR_FILE 1>$LOG_DIR$LOG_FILE 2>&1
         sudo chown root:root $ENV_VAR_DIR$ENV_VAR_FILE 1>$LOG_DIR$LOG_FILE 2>&1
@@ -85,7 +85,7 @@ function file_Creation(){
         echo "Ajout de la variable d'environnement END_OF_SERVICE"
         sudo echo "export END_OF_SERVICE=$END_OF_SERVICE" > /$ENV_VAR_DIR$ENV_VAR_FILE
         sleep 2
-        echo "Le fichier expire.sh a été mis à jour avec succès." 1>$LOG_DIR$LOG_FILE 2>&1
+        echo "Le fichier expire.sh a été mis à jour avec succès."
     else
         echo "Le fichier expire.sh n'existe pas. Création du fichier."
         sudo touch $ENV_VAR_DIR$ENV_VAR_FILE 1>$LOG_DIR$LOG_FILE 2>&1
@@ -102,7 +102,7 @@ function file_Creation(){
 # Function to check if the system is connected to the internet
 function check_Internet_Connection(){
     # Use wget to check if Google is reachable (silent mode)
-    echo "testing internet connection..." 1>$LOG_DIR$LOG_FILE 2>&1
+    echo "testing internet connection..."
     wget -q --spider http://google.com 1>$LOG_DIR$LOG_FILE 2>&1
 
     # Check the exit status of the wget command
@@ -122,10 +122,10 @@ function check_Internet_Connection(){
 ## Enable NTP Synchronization
 function year_Check(){
     if [[ $IS_CONNECTED == 1 ]]; then
-        echo "Enabling time synchronization..." 1>$LOG_DIR$LOG_FILE 2>&1
+        echo "Enabling time synchronization..."
         sudo timedatectl set-ntp true 1>$LOG_DIR$LOG_FILE 2>&1
         sleep 5
-        echo "Ntp synchronization enabled successfully!" 1>$LOG_DIR$LOG_FILE 2>&1
+        echo "Ntp synchronization enabled successfully!"
     fi
 
     # Check if current year is a leap year or not and set the expiration timestamp accordingly
@@ -140,38 +140,38 @@ function year_Check(){
     END_OF_SERVICE=$(($CURRENT_DATE + $EXPIRE_TIMESTAMP)) 1>$LOG_DIR$LOG_FILE 2>&1
 }
 
-function rebooter(){
-    echo 'A Reboot is needed to apply the new configuration to the host'
-    echo 'reboot now ? [y/N]'
-    read answer 1>$LOG_DIR$LOG_FILE 2>&1
+#function rebooter(){
+#    echo 'A Reboot is needed to apply the new configuration to the host'
+#    echo 'reboot now ? [y/N]'
+#    read answer 1>$LOG_DIR$LOG_FILE 2>&1
 
-    if [[ $answer -eq 'y' ]]; then
-        echo "Rebooting now..." 1>$LOG_DIR$LOG_FILE 2>&1
-        sleep 2
-        sudo reboot 1>$LOG_DIR$LOG_FILE 2>&1
-    elif [[ $answer -eq 'n' ]]; then
-        echo "Reboot cancelled. You will need to reboot the system manualy to apply the new configuration." 1>$LOG_DIR$LOG_FILE 2>&1
-    else
-        echo "Invalid response. Please answer with 'y' or 'n'."
-        rebooter
-    fi
-}
+#    if [[ $answer -eq 'y' ]]; then
+#        echo "Rebooting now..." 1>$LOG_DIR$LOG_FILE 2>&1
+#        sleep 2
+#        sudo reboot 1>$LOG_DIR$LOG_FILE 2>&1
+#    elif [[ $answer -eq 'n' ]]; then
+#        echo "Reboot cancelled. You will need to reboot the system manualy to apply the new configuration." 1>$LOG_DIR$LOG_FILE 2>&1
+#    else
+#        echo "Invalid response. Please answer with 'y' or 'n'."
+#        rebooter
+#    fi
+#}
 
 
 function service_Creation(){
     ## Create the timeout.service file in /etc/systemd/system/ if it doesn't exist
     if [[ -f $SYSTEMD_DIR/timeout.service ]]; then
         echo "Le fichier timeout.service existe déjà."
-        echo "Suppression du fichier timeout.service" 1>$LOG_DIR$LOG_FILE 2>&1
+        echo "Suppression du fichier timeout.service" 
         sudo rm -f $SYSTEMD_DIR/timeout.service 1>$LOG_DIR$LOG_FILE 2>&1
         sleep 1
 
-        echo "Création d'un nouveau fichier timeout.service" 1>$LOG_DIR$LOG_FILE 2>&1
+        echo "Création d'un nouveau fichier timeout.service"
         ## Copy timeout.service to /etc/systemd/system/
         sudo cp $WORKING_DIR/timeout.service $SYSTEMD_DIR/ 1>$LOG_DIR$LOG_FILE 2>&1
         sudo chmod 644 $SYSTEMD_DIR/timeout.service 1>$LOG_DIR$LOG_FILE 2>&1
     else
-        echo "Le fichier timeout.service n'existe pas. Création du fichier." 1>$LOG_DIR$LOG_FILE 2>&1
+        echo "Le fichier timeout.service n'existe pas. Création du fichier."
         ## Copy timeout.service to /etc/systemd/system/
         sudo cp $WORKING_DIR/timeout.service $SYSTEMD_DIR/ 1>$LOG_DIR$LOG_FILE 2>&1
         sudo chmod 644 $SYSTEMD_DIR/timeout.service 1>$LOG_DIR$LOG_FILE 2>&1
@@ -187,19 +187,20 @@ function service_Creation(){
         exit 1
     fi
     sleep 1
-    echo $'Done\nStarting the timeout.service...' 1>$LOG_DIR$LOG_FILE 2>&1
-    sudo systemctl start timeout.service 1>$LOG_DIR$LOG_FILE 2>&1
-    sleep 1
-    echo "timeout.service started successfully!"
 }
 
 function scriptsEncription(){
     if [[ $(dpkg -l | grep shc) ]];then
         echo "shc is already installed" 1>$LOG_DIR$LOG_FILE 2>&1
         echo "Starting the script encryption..." 1>$LOG_DIR$LOG_FILE 2>&1
+    else
+        echo "shc is not installed. Installing shc..."
+        sudo apt-get update -y 1>$LOG_DIR$LOG_FILE 2>&1
+        sudo apt-get install shc -y 1>$LOG_DIR$LOG_FILE 2>&1
     fi
-    sudo shc -v -r -f $WORKING_DIR/bloque_utilisateur -o $WORKING_DIR/bloque_utilisateur
-    sudo shc -v -r -f $WORKING_DIR/date-checker -o $WORKING_DIR/date-checker
+
+    sudo shc -v -r -f $WORKING_DIR/bloque_utilisateur -o $WORKING_DIR/bloque_utilisateur 1>$LOG_DIR$LOG_FILE 2>&1
+    sudo shc -v -r -f $WORKING_DIR/date-checker -o $WORKING_DIR/date-checker 1>$LOG_DIR$LOG_FILE 2>&1
     sudo chmod +x $WORKING_DIR/bloque_utilisateur
     sudo chmod +x $WORKING_DIR/date-checker
 }
@@ -215,17 +216,17 @@ function display_Result(){
 }
 
 log_Creation
-check_Internet_Connection 1>$LOG_DIR$LOG_FILE 2>&1
-year_Check 1>$LOG_DIR$LOG_FILE 2>&1
+check_Internet_Connection
+year_Check
 
-file_Creation 1>$LOG_DIR$LOG_FILE 2>&1
-scriptsEncription 1>$LOG_DIR$LOG_FILE 2>&1
+file_Creation
+scriptsEncription
 
 ## Create the script directory if it doesn't exist
 if [[ -d $SCRIPT_DEST_DIR ]]; then
-    echo "Le répertoire $SCRIPT_DEST_DIR existe déjà." 1>$LOG_DIR$LOG_FILE 2>&1
+    echo "Le répertoire $SCRIPT_DEST_DIR existe déjà."
 else
-    echo "Création du répertoire $SCRIPT_DEST_DIR" 1>$LOG_DIR$LOG_FILE 2>&1
+    echo "Création du répertoire $SCRIPT_DEST_DIR"
     sudo mkdir -p $SCRIPT_DEST_DIR 1>$LOG_DIR$LOG_FILE 2>&1
 fi
 
@@ -233,7 +234,6 @@ fi
 mv $WORKING_DIR/bloque_utilisateur $SCRIPT_DEST_DIR 1>$LOG_DIR$LOG_FILE 2>&1
 mv $WORKING_DIR/date-checker $SCRIPT_DEST_DIR 1>$LOG_DIR$LOG_FILE 2>&1
 
-service_Creation 1>$LOG_DIR$LOG_FILE 2>&1
+service_Creation 
 
-display_Result 1>$LOG_DIR$LOG_FILE 2>&1
-rebooter 1>$LOG_DIR$LOG_FILE 2>&1
+display_Result
