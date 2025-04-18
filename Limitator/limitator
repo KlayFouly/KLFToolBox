@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Script de gestion de l'expiration du mot de passe
-# Ce script crée un fichier expire.sh dans /etc/profile.d/
-# et y ajoute une variable d'environnement END_OF_SERVICE
-# qui contient le timestamp d'expiration du mot de passe
+# Password expiration management script
+# This script creates an expire.sh file in /etc/profile.d/
+# and adds an environment variable END_OF_SERVICE
+# which contains the password expiration timestamp
 
 
 ## if year + 1 % 4 = 0 && month > 02 => timestamp 31702400
@@ -11,42 +11,64 @@
 ## else => timestamp 31616000
 
 
+# Define the timestamps for leap and non-leap years
+BIS_TIMESTAMP=31702400
+NONBIS_TIMESTAMP=31616000
 
-BIS_TIMESTAMP=50
-NONBIS_TIMESTAMP=50
+# Get the current year and month
 CURRENT_YEAR=$(date +%Y)
 CURRENT_MONTH=$(date +%m)
+
+# Initialize the END_OF_SERVICE variable to 0
 END_OF_SERVICE=0;
+
+# Get the current date in seconds since Unix epoch
 CURRENT_DATE=$(date +%s)
+
+# Initialize the variable to check internet connection status (0 = not connected)
 IS_CONNECTED=0
+
+# Define the directory and file for environment variables
 ENV_VAR_DIR=/etc/profile.d/
 ENV_VAR_FILE=expire.sh
 
+
+# Function to check if the system is connected to the internet
 function check_Internet_Connection()
 {
-    echo "test internet"
+    # Use wget to check if Google is reachable (silent mode)
+    echo "testing internet connection..."
     wget -q --spider http://google.com
 
+    # Check the exit status of the wget command
     if [ $? -eq 0 ]; then
+        # If the exit status is 0, the system is connected to the internet
+
         echo "Host is connected to internet"
         IS_CONNECTED=1
     else
+        # If the exit status is not 0, the system is not connected to the internet
         echo "No internet connection found, this program need an internet connection to work properly"
         echo "Are you sure you want to continue without an internet connection [y/N] ? (Make sure your timezone is well configured and your system is set to the proper date and time)"
         read ans
 
+        # If the user responds with 'y', proceed without an internet connection
         if [[ $ans -eq 'y' ]]; then
             #install
             IS_CONNECTED=0
             echo "starting connectionless installation..."
             sleep 2
-
+        # If the user responds with 'n', cancel the installation
         elif [[ $ans -eq 'n' ]]; then
             # no Install
             echo "Cancelling installation"
             sleep 2
             exit 1
+        # If the user provides an invalid response, re-run the function
         else
+            echo "Invalid response. Please answer with 'y' or 'n'."
+            sleep 2
+            # Call the function again to check the internet connection
             check_Internet_Connection
         fi
     fi
@@ -63,6 +85,7 @@ if [[ $IS_CONNECTED == 1 ]]; then
     echo "Ntp synchronization enabled successfully!"
 fi
 
+# Check if current year is a leap year or not and set the expiration timestamp accordingly
 if (( $CURRENT_YEAR % 4 == 0 )) && (( $CURRENT_MONTH > 2 )); then
     EXPIRE_TIMESTAMP=$BIS_TIMESTAMP
 elif (( $CURRENT_YEAR + 1 % 4 == 0 )) && (( $CURRENT_MONTH < 3 )); then
@@ -73,6 +96,7 @@ fi
 
 END_OF_SERVICE=$(($CURRENT_DATE + $EXPIRE_TIMESTAMP))
 
+## Create the expire.sh file in /etc/profile.d/ if it doesn't exist
 if [[ -f $ENV_VAR_DIR$ENV_VAR_FILE ]]; then
     echo "Le fichier expire.sh existe déjà."
     echo "Suppression du fichier expire.sh"
