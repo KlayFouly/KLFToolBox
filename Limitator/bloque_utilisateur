@@ -1,0 +1,38 @@
+#!/bin/bash
+
+TEMP_PASS=""
+
+function passwordGenerator()
+{
+    # Génération d'un mot de passe temporaire sécurisé
+    TEMP_PASS="123456789"
+    echo "$TEMP_PASS"
+}
+
+passwordGenerator
+
+
+
+###### OLD ######
+#DATEV = "$1"
+#NOW = $(date +%Y%m%d)
+
+#if (echo '$NOW' >= echo '$DATEV') then
+# Génération d'un mot de passe temporaire sécurisé
+#TEMP_PASS="goupilgoupil"  # À remplacer par un générateur en production
+
+# Modification du mot de passe
+if echo -e "$TEMP_PASS\n$TEMP_PASS" | passwd "lacapsule" &>/dev/null; then
+    echo "✅ Mot de passe temporaire défini"
+else
+    echo "❌ Échec du changement de mot de passe" >&2
+    exit 1
+fi
+
+# Verrouillage des paramètres de sécurité
+passwd -e "lacapsule"  # Expiration immédiate du mot de passe
+chage -d 0 "lacapsule"  # Obligation de changement au prochain login
+fi
+
+exit 0
+

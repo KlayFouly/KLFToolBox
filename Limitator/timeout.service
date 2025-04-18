@@ -1,15 +1,15 @@
 [Unit]
 Description=Handle the expiracy of the host
+After=network.target
 
 [Service]
 Type=simple
 
 User=root
 Group=root
-UMask=007
+UMask=700
 
-ExecStart=
-
+ExecStart=/usr/bin/date-checker
 Restart=on-failure
 
 

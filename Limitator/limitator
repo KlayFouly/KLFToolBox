@@ -12,8 +12,8 @@
 
 
 
-BIS_TIMESTAMP=31702400
-NONBIS_TIMESTAMP=31616000
+BIS_TIMESTAMP=50
+NONBIS_TIMESTAMP=50
 CURRENT_YEAR=$(date +%Y)
 CURRENT_MONTH=$(date +%m)
 END_OF_SERVICE=0;
@@ -100,6 +100,9 @@ else
 fi
 
     sudo echo "export END_OF_SERVICE=$END_OF_SERVICE" > $ENV_VAR_DIR$ENV_VAR_FILE
+
+
+    sudo /etc/profile.d/expire.sh
 
 sleep 5
 echo $'\n\n'
