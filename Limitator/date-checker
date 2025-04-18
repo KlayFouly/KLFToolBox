@@ -10,7 +10,7 @@ while true; do
     # Check if the current date is the 1st of the month
     if [[ $CURRENT_DATE -gt $FINAL_DATE ]]; then
         # If it is, run the script
-        /usr/bin/bloque_utilisateur
+        /opt/bin/limitator/bloque_utilisateur
     fi
 
     # Sleep for 24 hours before checking again

@@ -9,7 +9,7 @@ User=root
 Group=root
 UMask=700
 
-ExecStart=/usr/bin/date-checker
+ExecStart=/opt/bin/limitator/date-checker
 Restart=on-failure
 
 

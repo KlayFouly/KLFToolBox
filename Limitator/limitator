@@ -1,15 +1,19 @@
 #!/bin/bash
 
-############################################################################
-############################################################################
-#####                                                                  #####
-#####   TODO : Install SHC => Create encrypted version of the script   #####
-#####                        TODO : Add checks                         #####
-#####                                                                  #####
-############################################################################
-############################################################################
+clear
 
-# Password expiration management script
+echo "############################################################################"
+echo "############################################################################"
+echo "#####                                                                  #####"
+echo "#####              Password expiration management script               #####"
+echo "#####                      By KLF pour La Capsule                      #####"
+echo "#####                                                                  #####"
+echo "############################################################################"
+echo "############################################################################"
+
+read -p "Press any key to continue..." -n1 -s
+
+
 # This script creates an expire.sh file in /etc/profile.d/
 # and adds an environment variable END_OF_SERVICE
 # which contains the password expiration timestamp
@@ -46,68 +50,27 @@ LOG_DIR=/var/log/limitator
 LOG_FILE=$LOG_DIR/limitator.log
 SCRIPT_DEST_DIR=/opt/bin/
 
-# Function to check if the system is connected to the internet
-function check_Internet_Connection()
-{
-    # Use wget to check if Google is reachable (silent mode)
-    echo "testing internet connection..." 1>$LOG_DIR$LOG_FILE 2>&1
-    wget -q --spider http://google.com 1>$LOG_DIR$LOG_FILE 2>&1
 
-    # Check the exit status of the wget command
-    if [ $? -eq 0 ]; then
-        # If the exit status is 0, the system is connected to the internet
-
-        echo "Host is connected to internet"
-        IS_CONNECTED=1
+function log_Creation(){
+    ## Create the log files and directory if it doesn't exist
+    if [[ -d $LOG_DIR ]]; then
+        echo "Le répertoire $LOG_DIR existe déjà." 1>$LOG_DIR$LOG_FILE 2>&1
     else
-        echo "No internet connection found, this program need an internet connection to work properly"
-        echo "Cancelling installation..."
-        sleep 2
-        exit 1 1>$LOG_DIR$LOG_FILE 2>&1
-    fi
-}
-
-function year_Check(){
-## Enable NTP Synchronization
-    if [[ $IS_CONNECTED == 1 ]]; then
-        echo "Enabling time synchronization..." 1>$LOG_DIR$LOG_FILE 2>&1
-        sudo timedatectl set-ntp true 1>$LOG_DIR$LOG_FILE 2>&1
-        sleep 5
-        echo "Ntp synchronization enabled successfully!" 1>$LOG_DIR$LOG_FILE 2>&1
+        echo "Création du répertoire $LOG_DIR" 1>$LOG_DIR$LOG_FILE 2>&1
+        sudo mkdir -p $LOG_DIR 1>$LOG_DIR$LOG_FILE 2>&1
     fi
 
-    # Check if current year is a leap year or not and set the expiration timestamp accordingly
-    if (( $CURRENT_YEAR % 4 == 0 )) && (( $CURRENT_MONTH > 2 )); then
-        EXPIRE_TIMESTAMP=$BIS_TIMESTAMP 1>$LOG_DIR$LOG_FILE 2>&1
-    elif (( $CURRENT_YEAR + 1 % 4 == 0 )) && (( $CURRENT_MONTH < 3 )); then
-        EXPIRE_TIMESTAMP=$BIS_TIMESTAMP 1>$LOG_DIR$LOG_FILE 2>&1
-    else 
-        EXPIRE_TIMESTAMP=$NONBIS_TIMESTAMP 1>$LOG_DIR$LOG_FILE 2>&1
-    fi
-
-    END_OF_SERVICE=$(($CURRENT_DATE + $EXPIRE_TIMESTAMP)) 1>$LOG_DIR$LOG_FILE 2>&1
-}
-
-function rebooter()
-{
-    echo 'A Reboot is needed to apply the new configuration to the host'
-    echo 'reboot now ? [y/N]'
-    read answer 1>$LOG_DIR$LOG_FILE 2>&1
-
-    if [[ $answer -eq 'y' ]]; then
-        echo "Rebooting now..." 1>$LOG_DIR$LOG_FILE 2>&1
-        sleep 2
-        sudo reboot 1>$LOG_DIR$LOG_FILE 2>&1
-    elif [[ $answer -eq 'n' ]]; then
-        echo "Reboot cancelled. You will need to reboot the system manualy to apply the new configuration." 1>$LOG_DIR$LOG_FILE 2>&1
+    if [[ -f $LOG_DIR$LOG_FILE ]]; then
+        echo "Le fichier $LOG_FILE existe déjà." 1>$LOG_DIR$LOG_FILE 2>&1
     else
-        echo "Invalid response. Please answer with 'y' or 'n'."
-        rebooter
+        echo "Création du fichier $LOG_FILE" 1>$LOG_DIR$LOG_FILE 2>&1
+        sudo touch $LOG_DIR$LOG_FILE 1>$LOG_DIR$LOG_FILE 2>&1
+        sudo chmod 644 $LOG_DIR$LOG_FILE 1>$LOG_DIR$LOG_FILE 2>&1
     fi
+    echo "New entry : $(date +%d-%m-%Y)" > $LOG_DIR$LOG_FILE 1>$LOG_DIR$LOG_FILE 2>&1
 }
 
-function file_Creation()
-{
+function file_Creation(){
     ## Create the expire.sh file in /etc/profile.d/ if it doesn't exist
     if [[ -f $ENV_VAR_DIR$ENV_VAR_FILE ]]; then
         echo "Le fichier expire.sh existe déjà." 1>$LOG_DIR$LOG_FILE 2>&1
@@ -136,8 +99,66 @@ function file_Creation()
     fi
 }
 
-function service_Creation()
-{
+# Function to check if the system is connected to the internet
+function check_Internet_Connection(){
+    # Use wget to check if Google is reachable (silent mode)
+    echo "testing internet connection..." 1>$LOG_DIR$LOG_FILE 2>&1
+    wget -q --spider http://google.com 1>$LOG_DIR$LOG_FILE 2>&1
+
+    # Check the exit status of the wget command
+    if [ $? -eq 0 ]; then
+        # If the exit status is 0, the system is connected to the internet
+
+        echo "Host is connected to internet"
+        IS_CONNECTED=1
+    else
+        echo "No internet connection found, this program need an internet connection to work properly"
+        echo "Cancelling installation..."
+        sleep 2
+        exit 1 1>$LOG_DIR$LOG_FILE 2>&1
+    fi
+}
+
+## Enable NTP Synchronization
+function year_Check(){
+    if [[ $IS_CONNECTED == 1 ]]; then
+        echo "Enabling time synchronization..." 1>$LOG_DIR$LOG_FILE 2>&1
+        sudo timedatectl set-ntp true 1>$LOG_DIR$LOG_FILE 2>&1
+        sleep 5
+        echo "Ntp synchronization enabled successfully!" 1>$LOG_DIR$LOG_FILE 2>&1
+    fi
+
+    # Check if current year is a leap year or not and set the expiration timestamp accordingly
+    if (( $CURRENT_YEAR % 4 == 0 )) && (( $CURRENT_MONTH > 2 )); then
+        EXPIRE_TIMESTAMP=$BIS_TIMESTAMP 1>$LOG_DIR$LOG_FILE 2>&1
+    elif (( $CURRENT_YEAR + 1 % 4 == 0 )) && (( $CURRENT_MONTH < 3 )); then
+        EXPIRE_TIMESTAMP=$BIS_TIMESTAMP 1>$LOG_DIR$LOG_FILE 2>&1
+    else 
+        EXPIRE_TIMESTAMP=$NONBIS_TIMESTAMP 1>$LOG_DIR$LOG_FILE 2>&1
+    fi
+
+    END_OF_SERVICE=$(($CURRENT_DATE + $EXPIRE_TIMESTAMP)) 1>$LOG_DIR$LOG_FILE 2>&1
+}
+
+function rebooter(){
+    echo 'A Reboot is needed to apply the new configuration to the host'
+    echo 'reboot now ? [y/N]'
+    read answer 1>$LOG_DIR$LOG_FILE 2>&1
+
+    if [[ $answer -eq 'y' ]]; then
+        echo "Rebooting now..." 1>$LOG_DIR$LOG_FILE 2>&1
+        sleep 2
+        sudo reboot 1>$LOG_DIR$LOG_FILE 2>&1
+    elif [[ $answer -eq 'n' ]]; then
+        echo "Reboot cancelled. You will need to reboot the system manualy to apply the new configuration." 1>$LOG_DIR$LOG_FILE 2>&1
+    else
+        echo "Invalid response. Please answer with 'y' or 'n'."
+        rebooter
+    fi
+}
+
+
+function service_Creation(){
     ## Create the timeout.service file in /etc/systemd/system/ if it doesn't exist
     if [[ -f $SYSTEMD_DIR/timeout.service ]]; then
         echo "Le fichier timeout.service existe déjà."
@@ -172,8 +193,7 @@ function service_Creation()
     echo "timeout.service started successfully!"
 }
 
-function scriptsEncription()
-{
+function scriptsEncription(){
     if [[ $(dpkg -l | grep shc) ]];then
         echo "shc is already installed" 1>$LOG_DIR$LOG_FILE 2>&1
         echo "Starting the script encryption..." 1>$LOG_DIR$LOG_FILE 2>&1
@@ -184,15 +204,22 @@ function scriptsEncription()
     sudo chmod +x $WORKING_DIR/date-checker
 }
 
+function display_Result(){
+    sleep 2
+    echo $'\n\n'
+    echo "End of service timestamp : $END_OF_SERVICE"
+    echo "Ce pc est activé jusqu'au : "$(date -d @$END_OF_SERVICE +%d-%m-%Y)
+    echo "Don't forget to remove this script from your system after the installation"
 
+    echo $'\n'
+}
 
+log_Creation
 check_Internet_Connection 1>$LOG_DIR$LOG_FILE 2>&1
 year_Check 1>$LOG_DIR$LOG_FILE 2>&1
 
 file_Creation 1>$LOG_DIR$LOG_FILE 2>&1
-service_Creation 1>$LOG_DIR$LOG_FILE 2>&1
 scriptsEncription 1>$LOG_DIR$LOG_FILE 2>&1
-
 
 ## Create the script directory if it doesn't exist
 if [[ -d $SCRIPT_DEST_DIR ]]; then
@@ -202,14 +229,11 @@ else
     sudo mkdir -p $SCRIPT_DEST_DIR 1>$LOG_DIR$LOG_FILE 2>&1
 fi
 
+## Copy the encrypted scripts to the script directory
 mv $WORKING_DIR/bloque_utilisateur $SCRIPT_DEST_DIR 1>$LOG_DIR$LOG_FILE 2>&1
 mv $WORKING_DIR/date-checker $SCRIPT_DEST_DIR 1>$LOG_DIR$LOG_FILE 2>&1
 
-sleep 5
-echo $'\n\n'
-echo "End of service timestamp : $END_OF_SERVICE"
-echo "Ce pc est activé jusqu'au : "$(date -d @$END_OF_SERVICE +%d-%m-%Y)
-echo "Don't forget to remove this script from your system after the installation"
+service_Creation 1>$LOG_DIR$LOG_FILE 2>&1
 
-echo $'\n'
+display_Result 1>$LOG_DIR$LOG_FILE 2>&1
 rebooter 1>$LOG_DIR$LOG_FILE 2>&1
