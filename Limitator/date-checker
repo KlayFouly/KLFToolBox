@@ -2,6 +2,9 @@
 
 ## Simple script checking for date
 ## this script is executed by service Timeout.service
+
+sleep 300
+
 FINAL_DATE=$(printenv END_OF_SERVICE)
 while true; do
     # Get the current date
