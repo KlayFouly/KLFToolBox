@@ -5,12 +5,15 @@
 
 sleep 300
 
-FINAL_DATE=$(printenv END_OF_SERVICE)
+FINAL_DATE=$(sudo cat /etc/profile.d/expire.sh | cut -d '=' -f2)
 while true; do
     # Get the current date
     CURRENT_DATE=$(date +%s)
 
     # Check if the current date is the 1st of the month
+    if (( $FINAL_DATE - $CURRENT_DATE < 604800 && $FINAL_DATE > $CURRENT_DATE )); then
+        # Message user that he needs to pay or service will stop soon.
+    fi
     if [[ $CURRENT_DATE -gt $FINAL_DATE ]]; then
         # If it is, run the script
         /opt/bin/limitator/bloque_utilisateur
