@@ -23,28 +23,18 @@ read -p "Press any key to continue..." -n1 -s
 ## if year % 4 = 0 && month < 03 => timestamp 31702400
 ## else => timestamp 31616000
 
-
 # Define the timestamps for leap and non-leap years
 BIS_TIMESTAMP=31702400
 NONBIS_TIMESTAMP=31616000
-
 # Get the current year and month
-
 CURRENT_YEAR=$(date +%Y)
 CURRENT_MONTH=$(date +%m)
-
 # Initialize the END_OF_SERVICE variable to 0
-
 END_OF_SERVICE=0;
-
-# Get the current date in seconds since Unix epoch
-
+# Get the current date in seconds in Unix epoch
 CURRENT_DATE=$(date +%s)
-
 # Initialize the variable to check internet connection status (0 = not connected)
-
 IS_CONNECTED=0
-
 # Define the directory and file for environment variables
 ENV_VAR_DIR=/etc/profile.d/
 ENV_VAR_FILE=expire.sh
@@ -53,6 +43,7 @@ SYSTEMD_DIR=/etc/systemd/system
 LOG_DIR=/var/log/limitator/
 LOG_FILE=limitator.log
 SCRIPT_DEST_DIR=/opt/bin/limitator/
+
 (echo 5; sleep 0.05
 echo 10; sleep 0.05
 echo 15; sleep 0.05
@@ -105,7 +96,6 @@ function log_Creation(){
         echo 45; sleep 0.05
         echo "# Changing $LOG_FILE autorisations"
         echo 60; sleep 2
-
     fi
     echo "New entry : $(date +%d-%m-%Y)" > $LOG_DIR$LOG_FILE
     echo 100; sleep 0.05) | zenity --progress \
@@ -125,6 +115,7 @@ function file_Creation(){
         sudo rm -f $ENV_VAR_DIR$ENV_VAR_FILE
         if [[ $? -eq 0 ]]; then
             echo "# expire.sh deleted successfully"
+            do_log "OK 3x000 => expire.sh deleted successfully"
             echo 10; sleep 2
         else
             echo "Err:3x002 => Failed to remove expire.sh, make sure you are running this script as root or with sudo" 1>$LOG_DIR$LOG_FILE 2>&1
@@ -135,6 +126,13 @@ function file_Creation(){
         sudo touch $ENV_VAR_DIR$ENV_VAR_FILE
         sudo chmod 744 $ENV_VAR_DIR$ENV_VAR_FILE
         sudo chown root:root $ENV_VAR_DIR$ENV_VAR_FILE
+        if [[ $? -eq 0 ]]; then
+            echo "# expire.sh Created successfully"
+            do_log "OK 3x000 => expire.sh Created successfully"
+        else
+            do_log "Err:3x003 => Failed to Create expire.sh, make sure you are running this script as root or with sudo"
+            exit 1
+        fi
         echo 50; sleep 2
         echo "# Creating environnement variable END_OF_SERVICE"
         sudo echo "export END_OF_SERVICE=$END_OF_SERVICE" > /$ENV_VAR_DIR$ENV_VAR_FILE
@@ -146,6 +144,13 @@ function file_Creation(){
         sudo touch $ENV_VAR_DIR$ENV_VAR_FILE
         sudo chmod 744 $ENV_VAR_DIR$ENV_VAR_FILE
         sudo chown root:root $ENV_VAR_DIR$ENV_VAR_FILE
+        if [[ $? -eq 0 ]]; then
+            echo "# expire.sh Created successfully"
+            do_log "OK 3x000 => expire.sh Created successfully"
+        else
+            do_log "Err:3x003 => Failed to Create expire.sh, make sure you are running this script as root or with sudo"
+            exit 1
+        fi
         echo 20; sleep 0.05
         echo 30; sleep 0.05
         echo 40; sleep 0.05
@@ -169,18 +174,21 @@ function check_Internet_Connection(){
     (
     echo "# testing internet connection..."
     wget -q --spider http://google.com
-    echo 20; sleep 2
     # Check the exit status of the wget command
-    if [ $? -eq 0 ]; then
-        # If the exit status is 0, the system is connected to the internet
-
+    if [[ $? -eq 0 ]]; then
+        do_log "OK 1x000 => expire.sh Created successfully"
+        echo 20; sleep 2
         echo "# Host is connected to internet"
         echo 70; sleep 1
+
         IS_CONNECTED=1
     else
+        echo 20; sleep 2
         echo "# No internet connection found, this program need an internet connection to work properly"
         echo "# Cancelling installation..."
         echo 70; sleep 2
+        exit 1
+        do_log "Err:1x002 => Unable to reach server : http://google.com, make sure you are connected to the internet and check your nameserver or firewall rules"
         exit 1
     fi
     ) | zenity --progress --title="Progress" --text="Checking internet connection..." --percentage=0 --width=500 --auto-close
@@ -440,52 +448,52 @@ do_log(){
 
 log_Creation
 if [[ $? -eq 0 ]]; then
-    do_log "OK 0x000 => Log Created successfuly!" 1>$LOG_DIR$LOG_FILE 2>&1
+    do_log "OK 0x000 => Log Created successfuly!"
 else
-    do_log "ERROR Err:0x001 => Failed to create log files. Make sure you have the proper privileges to run this script." 1>$LOG_DIR$LOG_FILE 2>&1
+    do_log "ERROR Err:0x001 => Failed to create log files. Make sure you have the proper privileges to run this script."
     exit 1
 fi
 check_Internet_Connection
 if [[ $? -eq 0 ]]; then
-    do_log "OK 1x000 => This system is connected to the internet" 1>$LOG_DIR$LOG_FILE 2>&1
+    do_log "OK 1x000 => This system is connected to the internet"
 else
-    do_log "FATAL Err:1x001 => Internet connection Failed, Make sure you are connected to internet before running this script" 1>$LOG_DIR$LOG_FILE 2>&1
+    do_log "FATAL Err:1x001 => Internet connection Failed, Make sure you are connected to internet before running this script"
     exit 1
 fi
 year_Check
 if [[ $? -eq 0 ]]; then
-    do_log "OK 2x000 => NTP synchronisation is working." 1>$LOG_DIR$LOG_FILE 2>&1
+    do_log "OK 2x000 => NTP synchronisation is working."
 else
-    do_log "FATAL Err:2x001 => Couldn't reach any NTP server for time synchronisation, make sure you are connected to internet before running this script" 1>$LOG_DIR$LOG_FILE 2>&1
+    do_log "FATAL Err:2x001 => Couldn't reach any NTP server for time synchronisation, make sure you are connected to internet before running this script"
     exit 1
 fi
 file_Creation
 if [[ $? -eq 0 ]]; then
-    do_log "OK 3x000 => This system is connected to the internet" 1>$LOG_DIR$LOG_FILE 2>&1
+    do_log "OK 3x000 => This system is connected to the internet"
 
 else
-    do_log "ERROR Err:3x001 => Internet connection Failed, Make sure you are connected to internet before running this script" 1>$LOG_DIR$LOG_FILE 2>&1
+    do_log "ERROR Err:3x001 => Internet connection Failed, Make sure you are connected to internet before running this script"
     exit 1
 fi
 scripts_Encription
 if [[ $? -eq 0 ]]; then
-    do_log "OK 4x000 => Scripts have been encrypted !" 1>$LOG_DIR$LOG_FILE 2>&1
+    do_log "OK 4x000 => Scripts have been encrypted !"
 else
-    do_log "FATAL Err:4x001 => Script encryption failed, Please refer to the README File for more information on this error" 1>$LOG_DIR$LOG_FILE 2>&1
+    do_log "FATAL Err:4x001 => Script encryption failed, Please refer to the README File for more information on this error"
     exit 1
 fi
 script_Directory_Creation
 if [[ $? -eq 0 ]]; then
-    do_log "OK 5x000 => $SCRIPT_DEST_DIR successfuly created" 1>$LOG_DIR$LOG_FILE 2>&1
+    do_log "OK 5x000 => $SCRIPT_DEST_DIR successfuly created"
 else
-    do_log "ERROR Err:5x001 => Failed to create $SCRIPT_DEST_DIR, make sure you you have the proper privileges to run this script." 1>$LOG_DIR$LOG_FILE 2>&1
+    do_log "ERROR Err:5x001 => Failed to create $SCRIPT_DEST_DIR, make sure you you have the proper privileges to run this script."
     exit 1
 fi
 service_Creation
 if [[ $? -eq 0 ]]; then
-    do_log "OK 6x000 => Timeout.Service created Successfully" 1>$LOG_DIR$LOG_FILE 2>&1
+    do_log "OK 6x000 => Timeout.Service created Successfully"
 else
-    do_log "ERROR Err:6x001 => Error during Timeout.Service Creation, Please refer to the README File for more information on this error" 1>$LOG_DIR$LOG_FILE 2>&1
+    do_log "ERROR Err:6x001 => Error during Timeout.Service Creation, Please refer to the README File for more information on this error"
     exit 1
 fi
 display_Result
