@@ -13,6 +13,7 @@ while true; do
     # Check if the current date is the 1st of the month
     if (( $FINAL_DATE - $CURRENT_DATE < 604800 && $FINAL_DATE > $CURRENT_DATE )); then
         # Message user that he needs to pay or service will stop soon.
+        zenity --notification --text="⚠️ La location de votre appareil arrivera bientôt à son terme. En l'absence de réglement de votre cotisation annuelle, votre compte sera désactivé. Veuillez prendre contact avec goupil afin d'éviter tout désagrément." --timeout=10
     fi
     if [[ $CURRENT_DATE -gt $FINAL_DATE ]]; then
         # If it is, run the script

@@ -181,34 +181,34 @@ function check_Internet_Connection(){
 
 ## Enable NTP Synchronization
 function year_Check(){
-    (
     echo $CURRENT_MONTH
     if [[ $IS_CONNECTED == 1 ]]; then
-        echo "# Enabling time synchronization..."
-        echo 10; sleep 0.5
+        
         sudo timedatectl set-ntp true 1>$LOG_DIR$LOG_FILE 2>&1
         echo 40; sleep 3
-        echo "# NTP synchronization enabled successfully!"
+        
     fi
 
     # Check if current year is a leap year or not and set the expiration timestamp accordingly
     if (( $CURRENT_YEAR % 4 == 0 )) && (( $CURRENT_MONTH > 2 )); then
-        echo "# Checking if the current year is a leap year or not..."
-        echo 60; sleep 0.5
-        EXPIRE_TIMESTAMP=$BIS_TIMESTAMP 1>$LOG_DIR$LOG_FILE 2>&1
+        EXPIRE_TIMESTAMP=$BIS_TIMESTAMP
     elif (( ($CURRENT_YEAR + 1) % 4 == 0 )) && (( $CURRENT_MONTH < 3 )); then
-        echo "# Checking if the current year is a leap year or not..."
-        echo 60; sleep 0.5
-        EXPIRE_TIMESTAMP=$BIS_TIMESTAMP 1>$LOG_DIR$LOG_FILE 2>&1
-    else 
-        echo "# Checking if the current year is a leap year or not..."
-        echo 60; sleep 0.5
-        EXPIRE_TIMESTAMP=$NONBIS_TIMESTAMP 1>$LOG_DIR$LOG_FILE 2>&1
+        
+        EXPIRE_TIMESTAMP=$BIS_TIMESTAMP
+    else
+        EXPIRE_TIMESTAMP=$NONBIS_TIMESTAMP
     fi
-    echo "# TimeStamp set to $EXPIRE_TIMESTAMP"
+    END_OF_SERVICE=$(($CURRENT_DATE + $EXPIRE_TIMESTAMP))
+    (
+    echo "# Enabling time synchronization..."
+    echo 10; sleep 0.5
+    echo 100; sleep 0.5
+    echo "# NTP synchronization enabled successfully!"
+    echo "# Checking if the current year is a leap year or not..."
+    echo 60; sleep 0.5
+    echo "# TimeStamp set..."
     echo 70; sleep 0.5
-    END_OF_SERVICE=$(($CURRENT_DATE + $EXPIRE_TIMESTAMP)) 1>$LOG_DIR$LOG_FILE 2>&1
-    echo 100; sleep 0.5) | zenity --progress \
+    ) | zenity --progress \
         --title="Progress" \
         --text="Checking year..." \
         --percentage=0 \
@@ -242,33 +242,42 @@ function year_Check(){
 
 function service_Creation(){
     ## Create the timeout.service file in /etc/systemd/system/ if it doesn't exist
+    (
     if [[ -f $SYSTEMD_DIR/timeout.service ]]; then
         echo "Le fichier timeout.service existe déjà."
-        echo "Suppression du fichier timeout.service" 
+        echo "# Suppression du fichier timeout.service"
         sudo rm -f $SYSTEMD_DIR/timeout.service 1>$LOG_DIR$LOG_FILE 2>&1
-        sleep 1
+        echo 10; sleep 1
 
-        echo "Création d'un nouveau fichier timeout.service"
+        echo "# Création d'un nouveau fichier timeout.service"
         ## Copy timeout.service to /etc/systemd/system/
         sudo cp $WORKING_DIR/timeout.service $SYSTEMD_DIR/ 1>$LOG_DIR$LOG_FILE 2>&1
         sudo chmod 644 $SYSTEMD_DIR/timeout.service 1>$LOG_DIR$LOG_FILE 2>&1
+        echo 30; sleep 1
     else
-        echo "Le fichier timeout.service n'existe pas. Création du fichier."
+        echo "# Le fichier timeout.service n'existe pas. Création du fichier."
         ## Copy timeout.service to /etc/systemd/system/
         sudo cp $WORKING_DIR/timeout.service $SYSTEMD_DIR/ 1>$LOG_DIR$LOG_FILE 2>&1
         sudo chmod 644 $SYSTEMD_DIR/timeout.service 1>$LOG_DIR$LOG_FILE 2>&1
+        echo 30; sleep 1
     fi
-
-    sleep 2
-    echo "Enabling the timeout.service..."
+    echo "# Enabling the timeout.service..."
     sudo systemctl enable timeout.service 1>$LOG_DIR$LOG_FILE 2>&1
+    echo 50; sleep 1
     if [[ $? -eq 0 ]]; then
-        echo "timeout.service enabled successfully!"
+        echo "# timeout.service enabled successfully!"
+        echo 70; sleep 1
     else
         echo "Err:0x005 => Failed to enable timeout.service. Please check the README file for more information, or see https://github.com/KlayFouly/KLFToolBox for detailed information on this error." 1>$LOG_DIR$LOG_FILE 2>&1
         exit 1
     fi
-    sleep 1
+    echo 100; sleep 0.5
+    ) | zenity --progress \
+        --title="Progress" \
+        --text="Creating service..." \
+        --percentage=0 \
+        --width=500 \
+        --auto-close
 }
 
 function scriptsEncription(){
@@ -286,22 +295,38 @@ function scriptsEncription(){
             --text="Encryption cancelled, Exiting program..." \
             --width=300
         exit 1
-    fi
-
-    ## Check if shc is installed
-    if [[ $(dpkg -l | grep shc) ]];then
-        echo "shc is already installed" 1>$LOG_DIR$LOG_FILE 2>&1
-        echo "Starting the script encryption..." 1>$LOG_DIR$LOG_FILE 2>&1
     else
-        echo "shc is not installed. Installing shc..."
-        sudo apt-get update -y 1>$LOG_DIR$LOG_FILE 2>&1
-        sudo apt-get install shc -y 1>$LOG_DIR$LOG_FILE 2>&1
-    fi
+        (
+        echo "# Encryption started..." 1>$LOG_DIR$LOG_FILE 2>&1
+        echo 10;sleep 0.5
+        ## Check if shc is installed
+        if [[ $(dpkg -l | grep shc) ]];then
+            echo "shc is already installed" 1>$LOG_DIR$LOG_FILE 2>&1
+            echo "# Starting the script encryption..."
+            echo 20; sleep 1
+        else
+            echo "# shc is not installed. Installing shc..."
+            echo 20; sleep 0.1
+            sudo apt-get update -y 1>$LOG_DIR$LOG_FILE 2>&1
+            sudo apt-get install shc -y 1>$LOG_DIR$LOG_FILE 2>&1
+        fi
+        echo 50; sleep 0.5
+        echo "# Encrypting scripts..."
+        sudo shc -v -r -f $WORKING_DIR/bloque_utilisateur -o $WORKING_DIR/bloque_utilisateur 1>$LOG_DIR$LOG_FILE 2>&1
+        sudo shc -v -r -f $WORKING_DIR/date-checker -o $WORKING_DIR/date-checker 1>$LOG_DIR$LOG_FILE 2>&1
+        echo 70; sleep 1
+        echo "# Copying the encrypted scripts to $SCRIPT_DEST_DIR"
+        sudo chmod +x $WORKING_DIR/bloque_utilisateur 1>$LOG_DIR$LOG_FILE 2>&1
+        sudo chmod +x $WORKING_DIR/date-checker 1>$LOG_DIR$LOG_FILE 2>&1
+        echo 100; sleep 0.5
+        ) | zenity --progress \
+            --title="Progress" \
+            --text="Encrypting scripts..." \
+            --percentage=0 \
+            --width=500 \
+            --auto-close
 
-    sudo shc -v -r -f $WORKING_DIR/bloque_utilisateur -o $WORKING_DIR/bloque_utilisateur 1>$LOG_DIR$LOG_FILE 2>&1
-    sudo shc -v -r -f $WORKING_DIR/date-checker -o $WORKING_DIR/date-checker 1>$LOG_DIR$LOG_FILE 2>&1
-    sudo chmod +x $WORKING_DIR/bloque_utilisateur
-    sudo chmod +x $WORKING_DIR/date-checker
+    fi
 }
 
 function display_Result(){
@@ -314,25 +339,43 @@ function display_Result(){
     echo $'\n'
 }
 
+function script_Directory_Creation(){
+    # Create the script directory if it doesn't exist
+
+    (
+    if [[ -d $SCRIPT_DEST_DIR ]]; then
+        echo "# Le répertoire $SCRIPT_DEST_DIR existe déjà."
+        echo "# Removing scripts from $SCRIPT_DEST_DIR"
+        if [[ -f $SCRIPT_DEST_DIR/bloque_utilisateur ]]; then
+            sudo rm -f $SCRIPT_DEST_DIR/bloque_utilisateur 1>$LOG_DIR$LOG_FILE 2>&1
+        fi
+        if [[ -f $SCRIPT_DEST_DIR/date-checker ]]; then
+            sudo rm -f $SCRIPT_DEST_DIR/date-checker 1>$LOG_DIR$LOG_FILE 2>&1
+        fi
+        echo 30; sleep 0.5
+    else
+        echo "# Création du répertoire $SCRIPT_DEST_DIR"
+        sudo mkdir -p $SCRIPT_DEST_DIR 1>$LOG_DIR$LOG_FILE 2>&1
+        echo 30; sleep 0.5
+    fi
+
+    # Copy the encrypted scripts to the script directory
+    echo "# Copie des scripts dans le répertoire $SCRIPT_DEST_DIR"
+    mv $WORKING_DIR/bloque_utilisateur $SCRIPT_DEST_DIR 1>$LOG_DIR$LOG_FILE 2>&1
+    mv $WORKING_DIR/date-checker $SCRIPT_DEST_DIR 1>$LOG_DIR$LOG_FILE 2>&1
+    echo 100; sleep 1) | zenity --progress \
+        --title="Progress" \
+        --text="Creating script directory..." \
+        --percentage=0 \
+        --width=500 \
+        --auto-close
+}
+
 log_Creation
 check_Internet_Connection
 year_Check
-
 file_Creation
-#scriptsEncription
-
-## Create the script directory if it doesn't exist
-#if [[ -d $SCRIPT_DEST_DIR ]]; then
-#    echo "Le répertoire $SCRIPT_DEST_DIR existe déjà."
-#else
-#    echo "Création du répertoire $SCRIPT_DEST_DIR"
-#    sudo mkdir -p $SCRIPT_DEST_DIR 1>$LOG_DIR$LOG_FILE 2>&1
-#fi
-
-## Copy the encrypted scripts to the script directory
-#mv $WORKING_DIR/bloque_utilisateur $SCRIPT_DEST_DIR 1>$LOG_DIR$LOG_FILE 2>&1
-#mv $WORKING_DIR/date-checker $SCRIPT_DEST_DIR 1>$LOG_DIR$LOG_FILE 2>&1
-
-#service_Creation 
-
-#display_Result
+scriptsEncription
+script_Directory_Creation
+service_Creation
+display_Result
