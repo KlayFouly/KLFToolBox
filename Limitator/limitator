@@ -286,7 +286,7 @@ function service_Creation(){
         echo "# timeout.service enabled successfully!"
         echo 70; sleep 1
     else
-        do_log "ERROR Err:0x005 => Failed to enable timeout.service. Please check the README file for more information, or see https://github.com/KlayFouly/KLFToolBox for detailed information on this error." 1>$LOG_DIR$LOG_FILE 2>&1
+        do_log "ERROR Err:0x005 => Failed to enable timeout.service. Please check the README file for more information, or see https://github.com/KlayFouly/KLFToolBox for detailed information on this error." 
         exit 1
     fi
     echo 50; sleep 1
@@ -336,7 +336,7 @@ function scripts_Encription(){
             echo "# timeout.service enabled successfully!"
             echo 70; sleep 1
         else
-            do_log "ERROR Err:0x005 => Failed to enable timeout.service. Please check the README file for more information, or see https://github.com/KlayFouly/KLFToolBox for detailed information on this error." 1>$LOG_DIR$LOG_FILE 2>&1
+            do_log "ERROR Err:0x005 => Failed to enable timeout.service. Please check the README file for more information, or see https://github.com/KlayFouly/KLFToolBox for detailed information on this error."
             exit 1
         fi
         sudo shc -v -r -f $WORKING_DIR/date-checker -o $WORKING_DIR/date-checker
@@ -344,7 +344,7 @@ function scripts_Encription(){
             echo "# timeout.service enabled successfully!"
             echo 70; sleep 1
         else
-            do_log "ERROR Err:0x005 => Failed to enable timeout.service. Please check the README file for more information, or see https://github.com/KlayFouly/KLFToolBox for detailed information on this error." 1>$LOG_DIR$LOG_FILE 2>&1
+            do_log "ERROR Err:0x005 => Failed to enable timeout.service. Please check the README file for more information, or see https://github.com/KlayFouly/KLFToolBox for detailed information on this error."
             exit 1
         fi
         echo 70; sleep 1
@@ -454,7 +454,7 @@ do_log(){
     'FATAL') print_fail "$msg" | tee -a $log_file ;;
     'ERROR') print_fail "$msg" | tee -a $log_file ;;
     'WARNING') print_warning "$msg" | tee -a $log_file ;;
-    'INFO') print_info "$msg" | tee -a log_file ;;
+    'INFO') print_info "$msg" | tee -a $log_file ;;
     'OK') print_ok "$msg" | tee -a $log_file ;;
     *) echo "$msg" | tee -a $log_file ;;
   esac
