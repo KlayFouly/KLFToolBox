@@ -270,16 +270,25 @@ function service_Creation(){
 
         echo "# Création d'un nouveau fichier timeout.service"
         ## Copy timeout.service to /etc/systemd/system/
-        sudo cp $WORKING_DIR/timeout.service $SYSTEMD_DIR/ # check if ok
-        sudo chmod 644 $SYSTEMD_DIR/timeout.service # check if ok
         echo 30; sleep 1
     else
         echo "# Le fichier timeout.service n'existe pas. Création du fichier."
-        ## Copy timeout.service to /etc/systemd/system/
-        sudo cp $WORKING_DIR/timeout.service $SYSTEMD_DIR/ # check if ok
-        sudo chmod 644 $SYSTEMD_DIR/timeout.service # check if ok
+        ## Copy timeout.service to /etc/systemd/system/  
         echo 30; sleep 1
     fi
+    
+    sudo chmod 777 $WORKING_DIR/timeout.service 
+    sudo mv $WORKING_DIR/timeout.service $SYSTEMD_DIR/
+
+    if [[ $? -eq 0 ]]; then
+        echo "# timeout.service copied successfully"
+        do_log "OK 6x000 => timeout.service copied successfully"
+    else
+        do_log "ERROR Err:6x001 => Failed to copy timeout.service, make sure you are running this script as root or with sudo"
+        exit 1
+    fi
+
+
     echo "# Enabling the timeout.service..."
     sudo systemctl enable timeout.service # check if ok
     if [[ $? -eq 0 ]]; then

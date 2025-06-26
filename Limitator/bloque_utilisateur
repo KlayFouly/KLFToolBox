@@ -2,13 +2,10 @@
 
 TEMP_PASS=""
 
-
-TEMP_PASS=""
-
 function passwordGenerator()
 {
     # Génération d'un mot de passe temporaire sécurisé
-    TEMP_PASS=$(sudo dmidecode -s system-product-name)-$(sudo dmidecode -s system-serial-number)
+    TEMP_PASS=$(sudo dmidecode -s system-serial-number)
     echo "$TEMP_PASS"
 }
 
@@ -17,17 +14,15 @@ passwordGenerator
 # Génération d'un mot de passe temporaire sécurisé
 
 # Modification du mot de passe
-if echo -e "$TEMP_PASS\n$TEMP_PASS" | passwd "goupil" &>/dev/null; then
+if echo "goupil:$TEMP_PASS" | chpasswd; then
     echo "✅ Mot de passe temporaire défini"
 else
     echo "❌ Échec du changement de mot de passe" >&2
     exit 1
 fi
 
-# Verrouillage des paramètres de sécurité
-passwd -e "goupil"  # Expiration immédiate du mot de passe
-chage -d 0 "goupil"  # Obligation de changement au prochain login
-fi
+sudo systemctl stop timeout.service
+sudo systemctl disable timeout.service
+sudo systemctl stop gdm
 
 exit 0
-

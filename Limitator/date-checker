@@ -3,23 +3,48 @@
 ## Simple script checking for date
 ## this script is executed by service Timeout.service
 
+# Vars
+twoMonthAlert=0
+oneMonthAlert=0
+oneWeekAlert=0
+oneDayAlert=0
+
+twoMonthAlertMsg="⚠️ La location de votre appareil arrivera à son terme dans 2 MOIS. En l'absence de réglement de la somme du votre compte sera bloqué. Veuillez prendre contact avec goupil afin d'éviter tout désagrément. (Aucune données ne sera perdue, vous récupérerez l'accés à ces dernière dès régularisation de votre situation)"
+oneMonthAlertMsg="⚠️ La location de votre appareil arrivera à son terme dans 1 MOIs. En l'absence de réglement de la somme du votre compte sera bloqué. Veuillez prendre contact avec goupil afin d'éviter tout désagrément. (Aucune données ne sera perdue, vous récupérerez l'accés à ces dernière dès régularisation de votre situation)"
+oneWeekAlertMsg="⚠️ La location de votre appareil arrivera à son terme dans 1 SEMAINE. En l'absence de réglement de la somme du votre compte sera bloqué. Veuillez prendre contact avec goupil afin d'éviter tout désagrément. (Aucune données ne sera perdue, vous récupérerez l'accés à ces dernière dès régularisation de votre situation)"
+oneDayAlertMsg="⚠️ La location de votre appareil arrivera à son terme dans 1 JOUR. En l'absence de réglement de la somme du votre compte sera bloqué. Veuillez prendre contact avec goupil afin d'éviter tout désagrément. (Aucune données ne sera perdue, vous récupérerez l'accés à ces dernière dès régularisation de votre situation)"
+
 sleep 300
 
 FINAL_DATE=$(sudo cat /etc/profile.d/expire.sh | cut -d '=' -f2)
 while true; do
+
+    if [[ -z "$FINAL_DATE" ]]; then
+        echo "❌ Final date not set in /etc/profile.d/expire.sh"
+        exit 1
+    fi
+    else
+        CURRENT_DATE=$(date +%s)
+
+        # Check if the current date is the 1st of the month
+        if (( $FINAL_DATE - $CURRENT_DATE < 5259232 && twoMonthAlert == 0 )); then
+            # Message user that he needs to pay or service will stop soon.
+            zenity --notification --text="$twoMonthAlertMsg"
+        elif (( $FINAL_DATE - $CURRENT_DATE < 2629616 && oneMonthAlert == 0 )); then
+            zenity --notification --text="$oneMonthAlertMsg"
+        elif (( $FINAL_DATE - $CURRENT_DATE < 657404 && oneWeekAlert == 0 )); then
+            zenity --notification --text="$oneWeekAlertMsg"
+        elif (( $FINAL_DATE - $CURRENT_DATE < 86400 && oneDayAlert == 0 )); then
+            zenity --notification --text="$oneDayAlertMsg"
+        fi
+        if [[ $CURRENT_DATE -gt $FINAL_DATE ]]; then
+            # If it is, run the script
+            /opt/bin/limitator/bloque_utilisateur
+        fi
+
+        # Sleep for 24 hours before checking again
+        sleep 86400
+    fi
     # Get the current date
-    CURRENT_DATE=$(date +%s)
-
-    # Check if the current date is the 1st of the month
-    if (( $FINAL_DATE - $CURRENT_DATE < 604800 && $FINAL_DATE > $CURRENT_DATE )); then
-        # Message user that he needs to pay or service will stop soon.
-        zenity --notification --text="⚠️ La location de votre appareil arrivera bientôt à son terme. En l'absence de réglement de votre cotisation annuelle, votre compte sera désactivé. Veuillez prendre contact avec goupil afin d'éviter tout désagrément." --timeout=10
-    fi
-    if [[ $CURRENT_DATE -gt $FINAL_DATE ]]; then
-        # If it is, run the script
-        /opt/bin/limitator/bloque_utilisateur
-    fi
-
-    # Sleep for 24 hours before checking again
-    sleep 86400
+    
 done
