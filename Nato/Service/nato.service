@@ -1,0 +1,17 @@
+[Unit]
+Description=Automatisation du processus de redirection nat sur proxmox
+After=network.target
+
+[Service]
+Type=simple
+
+User=root
+Group=root
+UMask=700
+
+ExecStart=/opt/bin/nato/nato
+Restart=on-failure
+
+
+[Install]
+WantedBy=multi-user.target

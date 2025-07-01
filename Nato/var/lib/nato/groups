@@ -1,0 +1,6 @@
+# for each group, add a list of port that should be mapped
+none:
+default:22
+web:80 443
+ssh:22
+db:3306 5432

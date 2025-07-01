@@ -1,0 +1,16 @@
+# add a group to a host so defined port will be mapped (you can override a port rule)
+#define host {
+#    hostname {{hostname}}
+#    mac {{mac}}
+#    ip {{ip}}
+#    group {{group}}
+#    port {{port:port}}
+#}
+
+define host {
+    hostname Ansible
+    mac XX:XX...
+    ip 172.16.128.201
+    group default
+    port 15223
+}
