@@ -188,8 +188,8 @@ function check_Internet_Connection(){
         echo "# No internet connection found, this program need an internet connection to work properly"
         echo "# Cancelling installation..."
         echo 70; sleep 2
-        exit 1
         do_log "Err:1x002 => Unable to reach server : http://google.com, make sure you are connected to the internet and check your nameserver or firewall rules"
+        return 1
         exit 1
     fi
     ) | zenity --progress --title="Progress" --text="Checking internet connection..." --percentage=0 --width=500 --auto-close
@@ -269,11 +269,9 @@ function service_Creation(){
         echo 10; sleep 1
 
         echo "# Création d'un nouveau fichier timeout.service"
-        ## Copy timeout.service to /etc/systemd/system/
         echo 30; sleep 1
     else
         echo "# Le fichier timeout.service n'existe pas. Création du fichier."
-        ## Copy timeout.service to /etc/systemd/system/  
         echo 30; sleep 1
     fi
     
@@ -281,11 +279,10 @@ function service_Creation(){
     sudo mv $WORKING_DIR/timeout.service $SYSTEMD_DIR/
 
     if [[ $? -eq 0 ]]; then
-        echo "# timeout.service copied successfully"
-        do_log "OK 6x000 => timeout.service copied successfully"
+        do_log "OK 6x000 => timeout.service crées avec success"
     else
         do_log "ERROR Err:6x001 => Failed to copy timeout.service, make sure you are running this script as root or with sudo"
-        exit 1
+        return 1
     fi
 
 
@@ -342,18 +339,18 @@ function scripts_Encription(){
         echo "# Encrypting scripts..."
         sudo shc -v -r -f $WORKING_DIR/bloque_utilisateur -o $WORKING_DIR/bloque_utilisateur
         if [[ $? -eq 0 ]]; then
-            echo "# timeout.service enabled successfully!"
+            echo "# Fichier bloque_utilisateur Crypté avec succées!"
             echo 70; sleep 1
         else
-            do_log "ERROR Err:0x005 => Failed to enable timeout.service. Please check the README file for more information, or see https://github.com/KlayFouly/KLFToolBox for detailed information on this error."
+            do_log "ERROR Err:0x005 => Failed to encrypt bloque_utilisateur. Please check the README file for more information, or see https://github.com/KlayFouly/KLFToolBox for detailed information on this error."
             exit 1
         fi
         sudo shc -v -r -f $WORKING_DIR/date-checker -o $WORKING_DIR/date-checker
         if [[ $? -eq 0 ]]; then
-            echo "# timeout.service enabled successfully!"
+            echo "# Fichier date_checker Crypté avec succées!"
             echo 70; sleep 1
         else
-            do_log "ERROR Err:0x005 => Failed to enable timeout.service. Please check the README file for more information, or see https://github.com/KlayFouly/KLFToolBox for detailed information on this error."
+            do_log "ERROR Err:0x005 => Failed to encrypt date_checker. Please check the README file for more information, or see https://github.com/KlayFouly/KLFToolBox for detailed information on this error."
             exit 1
         fi
         echo 70; sleep 1
