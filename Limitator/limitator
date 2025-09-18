@@ -39,7 +39,7 @@ IS_CONNECTED=0
 ENV_VAR_DIR=/etc/profile.d/
 ENV_VAR_FILE=expire.sh
 WORKING_DIR=$(dirname "$(readlink -f "$0")")
-SYSTEMD_DIR="/etc/systemd/system"
+SYSTEMD_DIR=/etc/systemd/system/
 LOG_DIR=/var/log/limitator/
 LOG_FILE=limitator.log
 SCRIPT_DEST_DIR=/opt/bin/limitator/
@@ -260,7 +260,7 @@ function service_Creation(){
     ## Create the timeout.service file in /etc/systemd/system/ if it doesn't exist
     (
     echo "# Installing notify-osd..."
-    sudo apt update && sudo apt install notify-osd -y # check if ok
+    #sudo apt update && sudo apt install notify-osd -y # check if ok
 
     if [[ -f $SYSTEMD_DIR/timeout.service ]]; then
         echo "Le fichier timeout.service existe déjà."
@@ -276,7 +276,7 @@ function service_Creation(){
     fi
     
     sudo chmod 777 $WORKING_DIR/timeout.service 
-    sudo mv $WORKING_DIR/timeout.service $SYSTEMD_DIR/
+    sudo mv $WORKING_DIR/timeout.service $SYSTEMD_DIR
 
     if [[ $? -eq 0 ]]; then
         do_log "OK 6x000 => timeout.service crées avec success"
@@ -294,6 +294,13 @@ function service_Creation(){
     else
         do_log "ERROR Err:0x005 => Failed to enable timeout.service. Please check the README file for more information, or see https://github.com/KlayFouly/KLFToolBox for detailed information on this error." 
         exit 1
+    fi
+
+    sudo systemctl start timeout.service # check if ok
+    if [[ $? -eq 0 ]]; then
+        echo "# timeout.service started successfully!"  
+    else
+        do_log "ERROR Err:0x005 => Failed to start timeout.service. Please check the README file for more information, or see https://github.com/KlayFouly/KLFToolBox for detailed information on this error." 
     fi
     echo 50; sleep 1
     echo 100; sleep 0.5
