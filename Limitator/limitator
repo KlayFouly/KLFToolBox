@@ -39,7 +39,7 @@ IS_CONNECTED=0
 ENV_VAR_DIR=/etc/profile.d/
 ENV_VAR_FILE=expire.sh
 WORKING_DIR=$(dirname "$(readlink -f "$0")")
-SYSTEMD_DIR=/etc/systemd/system
+SYSTEMD_DIR="/etc/systemd/system"
 LOG_DIR=/var/log/limitator/
 LOG_FILE=limitator.log
 SCRIPT_DEST_DIR=/opt/bin/limitator/
@@ -400,8 +400,8 @@ function script_Directory_Creation(){
 
     # Copy the encrypted scripts to the script directory
     echo "# Copie des scripts dans le répertoire $SCRIPT_DEST_DIR"
-    mv $WORKING_DIR/bloque_utilisateur $SCRIPT_DEST_DIR # check if ok
-    mv $WORKING_DIR/date-checker $SCRIPT_DEST_DIR # check if ok
+    sudo mv $WORKING_DIR/bloque_utilisateur $SCRIPT_DEST_DIR # check if ok
+    sudo mv $WORKING_DIR/date-checker $SCRIPT_DEST_DIR # check if ok
     echo 100; sleep 1) | zenity --progress \
         --title="Progress" \
         --text="Creating script directory..." \
