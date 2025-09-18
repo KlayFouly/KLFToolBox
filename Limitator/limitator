@@ -76,27 +76,15 @@ function log_Creation(){
     (
     if [[ -d $LOG_DIR ]]; then
         echo "Le répertoire $LOG_DIR existe déjà."
-        echo 20; sleep 0.5
+        echo 10; sleep 0.5
     else
         echo "# Création du répertoire $LOG_DIR"
         sudo mkdir -p $LOG_DIR
-        echo 20; sleep 0.5
+        echo 10; sleep 0.5
     fi
 
-    if [[ -f $LOG_DIR$LOG_FILE ]]; then
-        echo "Le fichier $LOG_FILE existe déjà."
-        echo 30; sleep 0.5
-    else
-        echo "# Création du fichier $LOG_FILE"
-        echo 30; sleep 0.05
-        echo 35; sleep 0.05
-        sudo touch $LOG_DIR$LOG_FILE
-        sudo chmod 644 $LOG_DIR$LOG_FILE
-        echo 40; sleep 0.05
-        echo 45; sleep 0.05
-        echo "# Changing $LOG_FILE autorisations"
-        echo 60; sleep 2
-    fi
+    create_file $LOG_FILE $LOG_DIR$LOG_FILE "root:root" "644"
+    
     echo "New entry : $(date +%d-%m-%Y)" > $LOG_DIR$LOG_FILE
     echo 100; sleep 0.05) | zenity --progress \
         --title="Progress" \
@@ -105,6 +93,7 @@ function log_Creation(){
         --width=500 \
         --auto-close
 }
+
 function create_File(){
     file_path=$1 # Name or Path of the file in the working directory (ex: /home/goupil/file.txt or file.txt)
     dest_path=$2 # Destination path of the file (ex: /etc/profile.d/file.txt)
@@ -115,7 +104,8 @@ function create_File(){
         echo "Usage: create_File <file_path> <dest_path>"
         return 1
     fi
-    
+
+
     if [[ -f $dest_path ]]; then
         echo "Le fichier $dest_path existe déjà."
         echo "# Suppression du fichier $dest_path"
@@ -124,10 +114,34 @@ function create_File(){
     else
         echo "# Le fichier $dest_path n'existe pas. Création du fichier."
     fi
-    sudo touch $dest_path # check if ok
+
+    if [ ! -f $file_path ]
+    then
+        echo "Le fichier $file_path n'existe pas."
+        touch $file_path
+        if [[ $? -eq 0 ]]; then
+            echo "# $file_path créé avec succès."
+            echo 70; sleep 1
+        else
+            do_log "ERROR Err:0x005 => Failed to Create $file_path. Please check the README file for more information, or see https://github.com/KlayFouly/KLFToolBox for detailed information on this error." 
+            exit 1
+        fi
+    fi
+
+    sudo mv $file_path $dest_path # check if ok
+
+    if [[ $? -eq 0 ]]; then
+        echo "# $file_path déplacé vers $dest_path avec succès."
+        echo 70; sleep 1
+    else
+        do_log "ERROR Err:0x005 => Failed to Move $file_path to $dest_path. Please check the README file for more information, or see https://github.com/KlayFouly/KLFToolBox for detailed information on this error." 
+        exit 1
+    fi
+
     if [ ! -z $owner ]; then
         sudo chown $owner $dest_path # check if ok
     fi
+
     if [ ! -z $permissions ]; then
         sudo chmod $permissions $dest_path # check if ok
     fi
@@ -136,13 +150,12 @@ function create_File(){
 function file_Creation(){
     ## Create the expire.sh file in /etc/profile.d/ if it doesn't exist
     (
-
     # Refactorisé ok
     create_File $ENV_VAR_FILE $ENV_VAR_DIR$ENV_VAR_FILE "root:root" "744"
     
     echo 50; sleep 2
     echo "# Creating environnement variable END_OF_SERVICE"
-    sudo echo "export END_OF_SERVICE=$END_OF_SERVICE" > $ENV_VAR_DIR$ENV_VAR_FILE
+    sudo echo "export END_OF_SERVICE=$END_OF_SERVICE" > $ENV_VAR_DIR$ENV_VAR_FILE # move elsewhere
     
     ) | zenity --progress --title="Progress" --text="Creating files..." --percentage=0 --width=500
 }
@@ -217,46 +230,13 @@ function year_Check(){
         --width=300
 }
 
-#function rebooter(){
-#    echo 'A Reboot is needed to apply the new configuration to the host'
-#    echo 'reboot now ? [y/N]'
-#    read answer 1>$LOG_DIR$LOG_FILE 2>&1#
-
-#    if [[ $answer -eq 'y' ]]; then
-#        echo "Rebooting now..." 1>$LOG_DIR$LOG_FILE 2>&1
-#        sleep 2
-#        sudo reboot 1>$LOG_DIR$LOG_FILE 2>&1
-#    elif [[ $answer -eq 'n' ]]; then
-#        echo "Reboot cancelled. You will need to reboot the system manualy to apply the new configuration." 1>$LOG_DIR$LOG_FILE 2>&1
-#    else
-#        echo "Invalid response. Please answer with 'y' or 'n'."
-#        rebooter
-#    fi
-#}
-
-
 function service_Creation(){
     ## Create the timeout.service file in /etc/systemd/system/ if it doesn't exist
     (
-    echo "# Installing notify-osd..."
+    #echo "# Installing notify-osd..."
     #sudo apt update && sudo apt install notify-osd -y # check if ok
 
-    if [[ -f $SYSTEMD_DIR/timeout.service ]]; then
-        echo "Le fichier timeout.service existe déjà."
-        echo "# Suppression du fichier timeout.service"
-        sudo rm -f $SYSTEMD_DIR/timeout.service # check if ok
-        echo 10; sleep 1
-
-        echo "# Création d'un nouveau fichier timeout.service"
-        echo 30; sleep 1
-    else
-        echo "# Le fichier timeout.service n'existe pas. Création du fichier."
-        echo 30; sleep 1
-    fi
-    
-    sudo chmod 777 $WORKING_DIR/timeout.service 
-    sudo mv $WORKING_DIR/timeout.service $SYSTEMD_DIR
-
+    create_File $WORKING_DIR/timeout.service $SYSTEMD_DIR/timeout.service "root:root" "644"
     if [[ $? -eq 0 ]]; then
         do_log "OK 6x000 => timeout.service crées avec success"
     else
@@ -264,23 +244,16 @@ function service_Creation(){
         return 1
     fi
 
-
     echo "# Enabling the timeout.service..."
-    sudo systemctl enable timeout.service # check if ok
-    if [[ $? -eq 0 ]]; then
-        echo "# timeout.service enabled successfully!"
-        echo 70; sleep 1
-    else
-        do_log "ERROR Err:0x005 => Failed to enable timeout.service. Please check the README file for more information, or see https://github.com/KlayFouly/KLFToolBox for detailed information on this error." 
-        exit 1
-    fi
 
+    sudo systemctl enable timeout.service # check if ok
     sudo systemctl start timeout.service # check if ok
     if [[ $? -eq 0 ]]; then
         echo "# timeout.service started successfully!"  
     else
         do_log "ERROR Err:0x005 => Failed to start timeout.service. Please check the README file for more information, or see https://github.com/KlayFouly/KLFToolBox for detailed information on this error." 
     fi
+
     echo 50; sleep 1
     echo 100; sleep 0.5
     ) | zenity --progress \
@@ -289,6 +262,59 @@ function service_Creation(){
         --percentage=0 \
         --width=500 \
         --auto-close
+}
+
+function install_dependenties(){
+    sudo apt-get update -y
+
+    for pkg in "$@"; do
+        echo "Installation de $pkg..."
+        if [[ $(dpkg -l | grep $pkg) ]];then
+            echo "$pkg is already installed" # check if ok
+        else
+            echo "# $pkg is not installed. Installing $pkg..."
+            sudo apt-get install $pkg -y # check if ok
+            if [[ $? -eq 0 ]]; then
+                echo "# $pkg installed successfully!"
+            else
+                do_log "ERROR Err:0x005 => Failed to install $pkg. Please check the README file for more information, or see https://github.com/KlayFouly/KLFToolBox for detailed information on this error."
+            fi
+        fi
+    done
+
+    
+}
+
+function encrypt_file(){
+    file=$1 # File to encrypt
+
+    for file in "$@"; do
+        (
+        echo "# Encryption started..." # check if ok
+        echo 10;sleep 0.5
+        if [ ! -f $file ]; then
+            do_log "ERROR Err:0x005 => File $file not found. Please check the README file for more information, or see https://github.com/KlayFouly/KLFToolBox for detailed information on this error."
+        fi
+        echo 50; sleep 0.5
+        echo "# Encrypting $file..."
+        sudo shc -v -r -f $file -o $file
+        if [[ $? -eq 0 ]]; then
+            echo "# $file encrypted successfully!"
+        else
+            do_log "ERROR Err:0x005 => Failed to encrypt $file. Please check the README file for more information, or see https://github.com/KlayFouly/KLFToolBox for detailed information on this error."
+        fi
+        echo 70; sleep 1
+        sudo rm -f $file.x.c # check if ok
+        sudo chmod +x $file # check if ok
+
+        echo 100; sleep 0.5
+        ) | zenity --progress \
+            --title="Progress" \
+            --text="Encrypting scripts..." \
+            --percentage=0 \
+            --width=500 \
+            --auto-close
+    done
 }
 
 function scripts_Encription(){
@@ -307,50 +333,7 @@ function scripts_Encription(){
             --width=300
         exit 1
     else
-        (
-        echo "# Encryption started..." # check if ok
-        echo 10;sleep 0.5
-        ## Check if shc is installed
-        if [[ $(dpkg -l | grep shc) ]];then
-            echo "shc is already installed" # check if ok
-            echo "# Starting the script encryption..."
-            echo 20; sleep 1
-        else
-            echo "# shc is not installed. Installing shc..."
-            echo 20; sleep 0.1
-            sudo apt-get update -y # check if ok
-            sudo apt-get install shc -y # check if ok
-        fi
-        echo 50; sleep 0.5
-        echo "# Encrypting scripts..."
-        sudo shc -v -r -f $WORKING_DIR/bloque_utilisateur -o $WORKING_DIR/bloque_utilisateur
-        if [[ $? -eq 0 ]]; then
-            echo "# Fichier bloque_utilisateur Crypté avec succées!"
-            echo 70; sleep 1
-        else
-            do_log "ERROR Err:0x005 => Failed to encrypt bloque_utilisateur. Please check the README file for more information, or see https://github.com/KlayFouly/KLFToolBox for detailed information on this error."
-            exit 1
-        fi
-        sudo shc -v -r -f $WORKING_DIR/date-checker -o $WORKING_DIR/date-checker
-        if [[ $? -eq 0 ]]; then
-            echo "# Fichier date_checker Crypté avec succées!"
-            echo 70; sleep 1
-        else
-            do_log "ERROR Err:0x005 => Failed to encrypt date_checker. Please check the README file for more information, or see https://github.com/KlayFouly/KLFToolBox for detailed information on this error."
-            exit 1
-        fi
-        echo 70; sleep 1
-        echo "# Copying the encrypted scripts to $SCRIPT_DEST_DIR"
-        sudo chmod +x $WORKING_DIR/bloque_utilisateur # check if ok
-        sudo chmod +x $WORKING_DIR/date-checker # check if ok
-        echo 100; sleep 0.5
-        ) | zenity --progress \
-            --title="Progress" \
-            --text="Encrypting scripts..." \
-            --percentage=0 \
-            --width=500 \
-            --auto-close
-
+        encrypt_file $WORKING_DIR/bloque_utilisateur $WORKING_DIR/date_checker
     fi
 }
 
@@ -452,6 +435,9 @@ do_log(){
   esac
 
 }
+
+
+install_dependenties "shc"
 
 log_Creation
 if [[ $? -eq 0 ]]; then
