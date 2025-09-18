@@ -105,66 +105,45 @@ function log_Creation(){
         --width=500 \
         --auto-close
 }
+function create_File(){
+    file_path=$1 # Name or Path of the file in the working directory (ex: /home/goupil/file.txt or file.txt)
+    dest_path=$2 # Destination path of the file (ex: /etc/profile.d/file.txt)
+    owner=$3     # Owner of the file (ex: root:root)
+    permissions=$4 # Permissions of the file (ex: 744)
+
+    if [ -z $1 || -z $2 ]; then
+        echo "Usage: create_File <file_path> <dest_path>"
+        return 1
+    fi
+    
+    if [[ -f $dest_path ]]; then
+        echo "Le fichier $dest_path existe déjà."
+        echo "# Suppression du fichier $dest_path"
+        sudo rm -f $dest_path # check if ok
+        echo "# Création d'un nouveau fichier $dest_path"
+    else
+        echo "# Le fichier $dest_path n'existe pas. Création du fichier."
+    fi
+    sudo touch $dest_path # check if ok
+    if [ ! -z $owner ]; then
+        sudo chown $owner $dest_path # check if ok
+    fi
+    if [ ! -z $permissions ]; then
+        sudo chmod $permissions $dest_path # check if ok
+    fi
+}
 
 function file_Creation(){
     ## Create the expire.sh file in /etc/profile.d/ if it doesn't exist
     (
-    if [[ -f $ENV_VAR_DIR$ENV_VAR_FILE ]]; then
-        echo "file expire.sh already exist."
-        echo "# Deleting expire.sh"
-        sudo rm -f $ENV_VAR_DIR$ENV_VAR_FILE
-        if [[ $? -eq 0 ]]; then
-            echo "# expire.sh deleted successfully"
-            do_log "OK 3x000 => expire.sh deleted successfully"
-            echo 10; sleep 2
-        else
-            # need to log the error
-            do_log "ERROR Err:3x002 => Failed to remove expire.sh, make sure you are running this script as root or with sudo"
-            exit 1
-        fi
-        echo 10; sleep 2
-        echo "# Creating new expire.sh file"
-        sudo touch $ENV_VAR_DIR$ENV_VAR_FILE
-        sudo chmod 744 $ENV_VAR_DIR$ENV_VAR_FILE
-        sudo chown root:root $ENV_VAR_DIR$ENV_VAR_FILE
-        if [[ $? -eq 0 ]]; then
-            echo "# expire.sh Created successfully"
-            do_log "OK 3x000 => expire.sh Created successfully"
-        else
-            do_log "Err:3x003 => Failed to Create expire.sh, make sure you are running this script as root or with sudo"
-            exit 1
-        fi
-        echo 50; sleep 2
-        echo "# Creating environnement variable END_OF_SERVICE"
-        sudo echo "export END_OF_SERVICE=$END_OF_SERVICE" > /$ENV_VAR_DIR$ENV_VAR_FILE
-        echo 90; sleep 1
-        echo "# expire.sh Updated successfully."
-        echo 100; sleep 1
-    else
-        echo "# File expire.sh do not exist, creating it now..."
-        sudo touch $ENV_VAR_DIR$ENV_VAR_FILE
-        sudo chmod 744 $ENV_VAR_DIR$ENV_VAR_FILE
-        sudo chown root:root $ENV_VAR_DIR$ENV_VAR_FILE
-        if [[ $? -eq 0 ]]; then
-            echo "# expire.sh Created successfully"
-            do_log "OK 3x000 => expire.sh Created successfully"
-        else
-            do_log "Err:3x003 => Failed to Create expire.sh, make sure you are running this script as root or with sudo"
-            exit 1
-        fi
-        echo 20; sleep 0.05
-        echo 30; sleep 0.05
-        echo 40; sleep 0.05
-        echo "# Creating environnement variable END_OF_SERVICE"
-        echo 50; sleep 1
-        echo 60; sleep 0.05
-        echo 70; sleep 0.05
-        echo 80; sleep 0.05
-        echo 90; sleep 0.05
-        sudo echo "export END_OF_SERVICE=$END_OF_SERVICE" > $ENV_VAR_DIR$ENV_VAR_FILE
-        echo "# expire.sh Updated successfully."
-        echo 100; sleep 1
-    fi
+
+    # Refactorisé ok
+    create_File $ENV_VAR_FILE $ENV_VAR_DIR$ENV_VAR_FILE "root:root" "744"
+    
+    echo 50; sleep 2
+    echo "# Creating environnement variable END_OF_SERVICE"
+    sudo echo "export END_OF_SERVICE=$END_OF_SERVICE" > $ENV_VAR_DIR$ENV_VAR_FILE
+    
     ) | zenity --progress --title="Progress" --text="Creating files..." --percentage=0 --width=500
 }
 
