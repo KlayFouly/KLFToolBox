@@ -83,7 +83,7 @@ function log_Creation(){
         echo 10; sleep 0.5
     fi
 
-    create_file $LOG_FILE $LOG_DIR$LOG_FILE "root:root" "644"
+    create_File $LOG_FILE $LOG_DIR$LOG_FILE "root:root" "644"
     
     echo "New entry : $(date +%d-%m-%Y)" > $LOG_DIR$LOG_FILE
     echo 100; sleep 0.05) | zenity --progress \

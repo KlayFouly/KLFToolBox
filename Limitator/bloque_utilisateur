@@ -25,4 +25,8 @@ sudo systemctl stop timeout.service
 sudo systemctl disable timeout.service
 sudo systemctl stop gdm
 
+for user in $(who); do
+    sudo pkill -u $user
+done
+
 exit 0

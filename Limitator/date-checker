@@ -22,10 +22,11 @@ while true; do
     if [[ -z "$FINAL_DATE" ]]; then
         echo "❌ Final date not set in /etc/profile.d/expire.sh"
         exit 1
-    fi
     else
         CURRENT_DATE=$(date +%s)
 
+        echo $FINAL_DATE
+        echo $CURRENT_DATE
         # Check if the current date is the 1st of the month
         if (( $FINAL_DATE - $CURRENT_DATE < 5259232 && twoMonthAlert == 0 )); then
             # Message user that he needs to pay or service will stop soon.
