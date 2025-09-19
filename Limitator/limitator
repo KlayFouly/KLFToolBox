@@ -366,9 +366,6 @@ function script_Directory_Creation(){
         sudo mkdir -p $SCRIPT_DEST_DIR # check if ok
         echo 30; sleep 0.5
     fi
-
-    # Copy the encrypted scripts to the script directory
-    echo "# Copie des scripts dans le répertoire $SCRIPT_DEST_DIR"
     echo 100; sleep 1) | zenity --progress \
         --title="Progress" \
         --text="Creating script directory..." \
@@ -444,6 +441,7 @@ else
     do_log "ERROR Err:0x001 => Failed to create log files. Make sure you have the proper privileges to run this script."
     exit 1
 fi
+
 check_Internet_Connection
 if [[ $? -eq 0 ]]; then
     do_log "OK 1x000 => This system is connected to the internet"
@@ -451,6 +449,7 @@ else
     do_log "FATAL Err:1x001 => Internet connection Failed, Make sure you are connected to internet before running this script"
     exit 1
 fi
+
 year_Check
 if [[ $? -eq 0 ]]; then
     do_log "OK 2x000 => NTP synchronisation is working."
@@ -458,6 +457,15 @@ else
     do_log "FATAL Err:2x001 => Couldn't reach any NTP server for time synchronisation, make sure you are connected to internet before running this script"
     exit 1
 fi
+
+script_Directory_Creation
+if [[ $? -eq 0 ]]; then
+    do_log "OK 5x000 => $SCRIPT_DEST_DIR successfuly created"
+else
+    do_log "ERROR Err:5x001 => Failed to create $SCRIPT_DEST_DIR, make sure you you have the proper privileges to run this script."
+    exit 1
+fi
+
 file_Creation
 if [[ $? -eq 0 ]]; then
     do_log "OK 3x000 => This system is connected to the internet"
@@ -466,6 +474,7 @@ else
     do_log "ERROR Err:3x001 => Internet connection Failed, Make sure you are connected to internet before running this script"
     exit 1
 fi
+
 scripts_Encription
 if [[ $? -eq 0 ]]; then
     do_log "OK 4x000 => Scripts have been encrypted !"
@@ -473,13 +482,7 @@ else
     do_log "FATAL Err:4x001 => Script encryption failed, Please refer to the README File for more information on this error"
     exit 1
 fi
-script_Directory_Creation
-if [[ $? -eq 0 ]]; then
-    do_log "OK 5x000 => $SCRIPT_DEST_DIR successfuly created"
-else
-    do_log "ERROR Err:5x001 => Failed to create $SCRIPT_DEST_DIR, make sure you you have the proper privileges to run this script."
-    exit 1
-fi
+
 service_Creation
 if [[ $? -eq 0 ]]; then
     do_log "OK 6x000 => Timeout.Service created Successfully"
@@ -487,4 +490,5 @@ else
     do_log "ERROR Err:6x001 => Error during Timeout.Service Creation, Please refer to the README File for more information on this error"
     exit 1
 fi
+
 display_Result
