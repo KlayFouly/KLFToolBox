@@ -305,6 +305,7 @@ function encrypt_file(){
         sudo chmod +x $file # check if ok
         echo 70; sleep 1
         sudo rm -f $file.x.c # check if ok
+        sudo mv $file $SCRIPT_DEST_DIR # check if ok
 
         echo 100; sleep 0.5
         ) | zenity --progress \
@@ -332,7 +333,7 @@ function scripts_Encription(){
             --width=300
         exit 1
     else
-        encrypt_file $WORKING_DIR/bloque_utilisateur $WORKING_DIR/date_checker
+        encrypt_file "$WORKING_DIR/bloque_utilisateur" "$WORKING_DIR/date-checker"
     fi
 }
 
@@ -368,8 +369,6 @@ function script_Directory_Creation(){
 
     # Copy the encrypted scripts to the script directory
     echo "# Copie des scripts dans le répertoire $SCRIPT_DEST_DIR"
-    sudo mv $WORKING_DIR/bloque_utilisateur $SCRIPT_DEST_DIR # check if ok
-    sudo mv $WORKING_DIR/date-checker $SCRIPT_DEST_DIR # check if ok
     echo 100; sleep 1) | zenity --progress \
         --title="Progress" \
         --text="Creating script directory..." \
