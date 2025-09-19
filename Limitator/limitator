@@ -100,7 +100,7 @@ function create_File(){
     owner=$3     # Owner of the file (ex: root:root)
     permissions=$4 # Permissions of the file (ex: 744)
 
-    if [ -z $1 || -z $2 ]; then
+    if [[ -z $1 || -z $2 ]]; then
         echo "Usage: create_File <file_path> <dest_path>"
         return 1
     fi
@@ -286,7 +286,6 @@ function install_dependenties(){
 }
 
 function encrypt_file(){
-    file=$1 # File to encrypt
 
     for file in "$@"; do
         (
@@ -303,9 +302,9 @@ function encrypt_file(){
         else
             do_log "ERROR Err:0x005 => Failed to encrypt $file. Please check the README file for more information, or see https://github.com/KlayFouly/KLFToolBox for detailed information on this error."
         fi
+        sudo chmod +x $file # check if ok
         echo 70; sleep 1
         sudo rm -f $file.x.c # check if ok
-        sudo chmod +x $file # check if ok
 
         echo 100; sleep 0.5
         ) | zenity --progress \
